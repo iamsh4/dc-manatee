@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary & sources · Dreamcast audio &amp; the Manatee driver</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <button id="nav-toggle" class="icon-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+<circle cx="16" cy="16" r="15" fill="none" stroke="var(--c-aica)" stroke-width="2"/>
+<path d="M5 16 C8 6, 11 6, 13 16 S18 26, 20 16 S25 8, 27 16" fill="none" stroke="var(--c-arm)" stroke-width="2.4" stroke-linecap="round"/>
+</svg><span>Manatee <small>· Dreamcast audio &amp; sound driver, explained</small></span></a>
+  <div class="spacer"></div>
+  <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme"></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" aria-label="Pages"></nav>
+  <main>
+    <article class="content">
+<div class="eyebrow">Reference</div>
+<h1>Glossary &amp; sources</h1>
+
+<h2 id="glossary">Glossary</h2>
+<div class="tablewrap"><table>
+  <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td>ADPCM</td><td>Adaptive differential PCM: Yamaha's 4-bit sample compression, a quarter the size of 16-bit PCM.</td></tr>
+  <tr><td>AICA</td><td>The Dreamcast's Yamaha sound chip: ARM7DI CPU, 64-channel sample player, DSP, mixer, timers, interrupt controller, MIDI UART and RTC, around 2 MB of sound RAM.</td></tr>
+  <tr><td>ARM7DI</td><td>The AICA's CPU: an ARMv3 core without Thumb or halfword instructions. Runs the sound driver.</td></tr>
+  <tr><td>Bank table</td><td>A table in sound RAM where the SH-4 records the address and size of each downloaded bank.</td></tr>
+  <tr><td>Channel / slot</td><td>One of the AICA's 64 sample-playback voices.</td></tr>
+  <tr><td>Command (host command)</td><td>A 16-byte request from the SH-4 library to the driver, delivered in batches of up to 32 through the mailbox.</td></tr>
+  <tr><td>Direct send</td><td>A voice's dry output to the mixer, with its own level and pan.</td></tr>
+  <tr><td>DSP</td><td>The AICA's effect processor: a 128-step program per sample with delay memory in sound RAM.</td></tr>
+  <tr><td>Effect send</td><td>A voice's wet output into one of 16 DSP input buses, with a send level.</td></tr>
+  <tr><td>Envelope (EG)</td><td>The hardware amplitude contour: attack, decay 1, decay level, decay 2, release.</td></tr>
+  <tr><td>Event ring</td><td>Manatee's 1024-entry queue of MIDI-style events: the single path from sequencer, game and MIDI input into the voice engine.</td></tr>
+  <tr><td>FIQ</td><td>ARM "fast interrupt", with its own banked registers. The only interrupt the AICA raises on the ARM.</td></tr>
+  <tr><td>Filter envelope</td><td>A second envelope (five levels, four rates) controlling each voice's low-pass cutoff.</td></tr>
+  <tr><td>G2 bus</td><td>The Dreamcast's slow peripheral bus through which the SH-4 reaches the AICA.</td></tr>
+  <tr><td>GD-DA</td><td>CD audio from the GD-ROM drive, fed into the AICA's external inputs.</td></tr>
+  <tr><td>Holly</td><td>The Dreamcast's system ASIC (graphics, bus bridges, DMA, interrupt routing).</td></tr>
+  <tr><td>Key on / key off</td><td>Starting a voice (sample and envelopes restart) / moving it into its release phase. Committed for all channels at once by an "execute" write.</td></tr>
+  <tr><td>Layer / split</td><td>A program plays up to 4 layers per note; each layer picks one split, a key/velocity window with its own sample and settings.</td></tr>
+  <tr><td>LFO</td><td>Low-frequency oscillator for vibrato and tremolo.</td></tr>
+  <tr><td>Manatee</td><td>Sega's standard AICA sound driver (<code>manatee.drv</code>), shipped with the Katana SDK and used by many Dreamcast games.</td></tr>
+  <tr><td>Monitor</td><td>AICA registers showing one selected channel's envelope and play position; the driver rotates through channels.</td></tr>
+  <tr><td>Port</td><td>A player instance the game controls: 8 MIDI ports, 8 one-shot ports, 4 PCM stream ports.</td></tr>
+  <tr><td>Priority</td><td>Per port; decides which sounds may steal voices or PCM slots from which.</td></tr>
+  <tr><td>Ring buffer</td><td>Either the DSP's delay memory or a stream's circular sample buffer, both in sound RAM.</td></tr>
+  <tr><td>sd library</td><td>Sega's SH-4 sound library (<code>sdMidiPlay</code>, <code>sdShotPlay</code>, <code>sdPstmPlay</code>, …) that talks to Manatee.</td></tr>
+  <tr><td>SMPB</td><td>MIDI program (tone) bank: programs → layers → splits.</td></tr>
+  <tr><td>SMSB / SMSD</td><td>MIDI sequence bank / one sequence.</td></tr>
+  <tr><td>SOSB</td><td>One-shot bank: ready-made channel register images plus loop counts.</td></tr>
+  <tr><td>SFPB / SFOB / SFPW</td><td>Effect program bank / effect output-set bank / effect work area (DSP ring buffer).</td></tr>
+  <tr><td>Sound RAM</td><td>The AICA's 2 MB memory, shared by the ARM, the voices, the DSP and the SH-4.</td></tr>
+  <tr><td>Status record</td><td>32 bytes per port written by the driver every 4 ms for the game to read.</td></tr>
+  <tr><td>Timer A</td><td>An AICA sample-counting timer; Manatee's 1 ms / 4 ms heartbeat.</td></tr>
+</table></div>
+
+<h2 id="sources">Sources in this repository</h2>
+<div class="tablewrap"><table>
+  <tr><th>Path</th><th>Content</th></tr>
+  <tr><td><code>src/arm/</code></td><td>The C reconstruction of the driver: one file per subsystem, confidence rating and notes on every function.</td></tr>
+  <tr><td><code>ghidra/Manatee.gpr</code> (built by <code>make ghidra</code>)</td><td>The annotated Ghidra project (names, register-accurate signatures, comments, types), generated from your copy of the driver by <code>make ghidra</code>.</td></tr>
+  <tr><td><code>tools/ghidra/annotations/</code></td><td>All Ghidra annotations as JSON, re-applicable with <code>ApplyManatee.java</code>.</td></tr>
+  <tr><td><a href="https://github.com/iamsh4/dc-manatee/blob/main/docs/HOW_IT_WORKS.md"><code>docs/HOW_IT_WORKS.md</code></a></td><td>The same story in one Markdown file, with more addresses.</td></tr>
+  <tr><td><a href="https://github.com/iamsh4/dc-manatee/blob/main/docs/research/host_protocol.md"><code>docs/research/host_protocol.md</code></a></td><td>The SH-4 side: command layouts, status records, downloads.</td></tr>
+  <tr><td><a href="https://github.com/iamsh4/dc-manatee/tree/main/docs/notes"><code>docs/notes/</code></a></td><td>Formats: tone banks, sequences, one-shots and streams, effects, and a map of every byte of the driver image.</td></tr>
+</table></div>
+<p>General AICA hardware descriptions (what each block does) reflect common Dreamcast technical knowledge; the
+driver-specific behaviour on every page comes from the decompilation.</p>
+
+      <nav class="pager" aria-label="Previous and next page"></nav>
+      <div class="footer">Reference build: the Manatee driver shipped in Soul Calibur (USA), v1.1 build 0x3F. Built from the decompilation in this repository (<code>src/arm/</code>, <code>docs/</code>). Hover diagram elements for details.</div>
+    </article>
+  </main>
+  <aside class="toc" aria-label="On this page"></aside>
+</div>
+</body>
+</html>
