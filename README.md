@@ -93,6 +93,20 @@ open site/index.html
   higher priority, and PCM slot stealing) are reproduced and documented in the C, in Ghidra and on the
   site's *Bugs, quirks & confidence* page.
 
+## How this was made
+
+The analysis and everything in this repository were produced with Claude (Anthropic's AI model), working in
+Ghidra through the GhidraMCP plugin and in the shell:
+- extracting the driver;
+- disassembly and annotation;
+- the C reconstruction;
+- the independent per-file review against the disassembly;
+- the documentation and the explainer site.
+
+Hardware descriptions that go beyond what the driver code shows are general Dreamcast/AICA knowledge and
+are marked as such. Uncertain findings carry confidence ratings; verify them against the disassembly before
+relying on them.
+
 ## Credits
 
 The original driver is © SEGA; its credit string attributes it to Sega's Digital Media group. This
