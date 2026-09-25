@@ -11,7 +11,7 @@ This repository contains:
 | --- | --- |
 | `src/arm/` | A logical, compile-able **C reconstruction of every routine** in the driver: 181 functions, each with a confidence rating and notes on quirks and uncertainties. The original is hand-written ARM assembly; the C preserves its behaviour, including its bugs. |
 | `tools/ghidra/` | Everything needed to build the **fully annotated Ghidra project**: 185 named functions with register-accurate signatures, work-RAM structures, AICA register map, jump tables, renamed locals and about 550 comments. |
-| `site/` | An illustrated **explainer site** about Dreamcast audio (SH-4 and G2 bus, AICA, ARM7, DSP, interrupts and FIQ) and how the driver works. Open `site/index.html`. |
+| `site/` | An illustrated **explainer site** about Dreamcast audio (SH-4 and G2 bus, AICA, ARM7, DSP, interrupts and FIQ) and how the driver works. **Read it online at <https://iamsh4.github.io/dc-manatee/>**, or open `site/index.html`. |
 | `docs/` | The same material in Markdown: `HOW_IT_WORKS.md`, plus data-format notes (tone banks, sequences, one-shots/streams, effects, a map of the driver image) and the SH-4 side of the host protocol. |
 
 **No Sega code or data is included.** The Ghidra project and one generated source file (`src/arm/tables.c`)
@@ -48,7 +48,7 @@ make && make link
 # 3. build the annotated Ghidra project
 make ghidra                                                # -> ghidra/Manatee.gpr
 
-# 4. read the explainer
+# 4. read the explainer (also online: https://iamsh4.github.io/dc-manatee/)
 open site/index.html
 ```
 
@@ -79,6 +79,8 @@ open site/index.html
   - `tools/ghidra/apply_live.sh` applies the JSON to the open project;
   - `export_live.sh` dumps listings and decompilation to `out/ghidra/`;
   - `HarvestLocals.java` snapshots local names you renamed by hand back into JSON.
+- **Site:** pages are written in `site/src/` and built with `make site`; `tools/publish_site.sh` publishes
+  them to the `gh-pages` branch that GitHub Pages serves.
 - **Conventions** for contributors are in `docs/CONVENTIONS.md`.
 
 ## Status
