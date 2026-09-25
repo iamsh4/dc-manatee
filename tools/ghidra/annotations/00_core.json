@@ -1,0 +1,672 @@
+{
+ "functions": [
+  {
+   "addr": "0x100",
+   "name": "drv_reset",
+   "signature": "void drv_reset(void)",
+   "confidence": "high",
+   "source": "src/arm/main.c",
+   "plate": "Reset entry (0x100-0x10C): SVC stack at 0xB000, FIQ masked; body 0x110-0x224 = drv_main in main.c.\nBoot: drv_status (0xF8)=0xFF, MVOL=0, aica_silence_all, clear_host_area, init_bank_table, evq_clear, init_midi_ports, clear_voices, dsp_out_clear, fx_prg_clear, seq_init, pcm_init, fx_status_init, MVOL=master_vol=0xF, midi_in_flush, irq_init (Timer A + MIDI-in FIQ), sndram_free_base=0x18000, drv_status='SEGA' (word at 0x38), unmask FIQ.\nMain loop: every pass voice_service_x4 (up to 4 ring events). If tick1ms_flag: clear it, voice_monitor_sample+next, restart the loop (4 ms flag not checked on that pass). Else if tick4ms_flag: clear it, voice_monitor_sample, host_cmd_poll (only if host_cmd_pending), pcm_tick, seq_tick, port speed/vol/pan/pitch fades, voice_update_4ms, port_status_export, ticks_since_cmd_inc, pcm speed/pitch fades, pcm_pitch_update, fx_update_ringbuf, fx_ext_flags_update, fx_prg_load_service, voice_monitor_next.",
+   "noreturn": true
+  },
+  {
+   "addr": "0x234",
+   "name": "exc_ignore",
+   "signature": "void exc_ignore(void)",
+   "confidence": "high",
+   "source": "src/arm/irq.c",
+   "plate": "Shared handler for undefined/SWI/prefetch-abort/data-abort/addr-exception/IRQ: sub lr,#4; save at 0x244; ldmia {pc}^ (return to LR-4, CPSR restored).\nIRQ: correct return. Prefetch abort: retries the instruction. Undefined/SWI: LR-4 is the instruction itself -> loops forever. Data abort/address exception (LR=fault+8): resumes after the faulting instruction.\nIRQ is never raised by the AICA (only FIQ is wired), so this is a crash trap."
+  },
+  {
+   "addr": "0x248",
+   "name": "fiq_handler",
+   "signature": "void fiq_handler(void)",
+   "confidence": "high",
+   "source": "src/arm/irq.c",
+   "plate": "FIQ handler (the only AICA interrupt line to the ARM). Banked r8-r12; stack via 'adr sp,0x3CC' on every entry (LR-4 at 0x3C8, r0-r7 at 0x3A8 on the MIDI path).\nfiq_count++, then dispatches on AICA_INTREQ & 7 (levels assigned in irq_init) through the branch table at 0x284:\n  level 2 = Timer A (0x2A8): TIMA=0xD4 (44 samples = 0.998 ms), SCIRE=0x40, tick1ms_flag=0xFF on every interrupt. tick_drift_count counts 441 down; on 0 it is reloaded and the tick is not counted for 4 ms, so 440 counted ticks = 441*44 samples = exactly 0.44 s. Every 4th counted tick: tick4ms_count++, tick4ms_flag=0xFF, tick1ms_flag=0.\n  level 5 = MIDI-in (0x328): midi_irq_count++, midi_irq_flag (0xFC) = -1, save r0-r7, midi_in_isr. No SCIRE ack for bit 3.\n  other levels: nothing.\nExit (0x34C): INTCLR written four times, ldmia sp!,{pc}^. 'mov r11,#0' at 0x254 is dead.",
+   "locals": {
+    "uVar1": "level"
+   }
+  },
+  {
+   "addr": "0x3cc",
+   "name": "irq_init",
+   "signature": "void irq_init(void)",
+   "confidence": "high",
+   "source": "src/arm/irq.c",
+   "plate": "Clears pending FIQ (8 x INTCLR), programs SCILV0=0x18 SCILV1=0x50 SCILV2=0x08 which yields levels:\n  bit3 MIDI-in  -> level 5\n  bit4 DMA-end  -> level 3 (not enabled)\n  bit6 Timer A  -> level 2\nStarts Timer A (TACTL=0 i.e. 1 sample/count, TIMA=0xD4) and enables SCIEB = bit3|bit6 (0x48), then acks them in SCIRE.\nThe SH-4->ARM interrupt (bit5) is never enabled: the SH-4 talks to the driver purely by polled shared memory.",
+   "locals": {
+    "iVar1": "i"
+   }
+  },
+  {
+   "addr": "0x43c",
+   "name": "clear_host_area",
+   "signature": "void clear_host_area(void)",
+   "confidence": "high",
+   "source": "src/arm/init.c",
+   "plate": "Zeroes sound RAM 0x13000-0x17FFF (host interface/work area, 0x1400 words) and sets fx_prg_cur (0x13474) = 0xFF (no FX program loaded).",
+   "locals": {
+    "@r1:0x440": "n",
+    "@r12:0x448": "p"
+   }
+  },
+  {
+   "addr": "0x464",
+   "name": "init_bank_table",
+   "signature": "void init_bank_table(void)",
+   "confidence": "high",
+   "source": "src/arm/init.c",
+   "plate": "Clears 32 dwords at 0x14000 and 32 dwords at 0x14080 (first 16 {addr,size} entries of the MIDI program-bank table), then installs the built-in banks (sizes read from the builtin_*_size words in the image):\n  0x14290 = {0x4124, size, 0x4124, size}  program-bank entries 66/67 = drum kits 0/1 (builtin_smpb1)\n  0x14200 = {0x2908, size}  fx_prg_bank = builtin SFPB 'e-reverb'\n  0x14280 = {0x4234, size}  fx_out_bank = builtin SFOB",
+   "locals": {
+    "@r1:0x46c": "n",
+    "@r12:0x488": "p"
+   }
+  },
+  {
+   "addr": "0x4e8",
+   "name": "evq_clear",
+   "signature": "void evq_clear(void)",
+   "confidence": "high",
+   "source": "src/arm/init.c",
+   "plate": "Zeroes the 4 KB MIDI event ring at 0xB000-0xBFFF.",
+   "locals": {
+    "@r1:0x4ec": "n",
+    "@r12:0x4f4": "p"
+   }
+  },
+  {
+   "addr": "0x504",
+   "name": "init_midi_ports",
+   "signature": "void init_midi_ports(void)",
+   "confidence": "high",
+   "source": "src/arm/init.c",
+   "plate": "Zeroes 0xC000-0xE7FF (0xA00 dwords), then:\n  PortState x8: vol_target/volume/pan_target/pan = 0x80, pitch_target/pitch/speed_target/speed = 0x8000, direct_lvl = fx_send = 0x80 (all neutral).\n  MidiChannel x128 (8 ports x 16): volume 100, level 100, expression 127, isel 0x7F, pan 0xC0 (bit7 = use tone pan), q_ofs 0x40, cutoff 0x40 (byte store), far/fd1r/fd2r/frr/ar/dr/dl/cc90/rr_ofs 0x20, flv_ofs[0..4] = 0x2000 (strb 0x20 to the high bytes +0x29..+0x31), bank = 0x3E48 (builtin_smpb0), prog = bank + prog_ofs[0], velcurve = bank + velcurve_tab.",
+   "locals": {
+    "@r12:0x51c": "port",
+    "@r12:0x560": "ch",
+    "@r11:0x508": "n"
+   }
+  },
+  {
+   "addr": "0x614",
+   "name": "clear_voices",
+   "signature": "void clear_voices(void)",
+   "confidence": "high",
+   "source": "src/arm/init.c",
+   "plate": "Zeroes 0xE800-0xF7FF (0x400 dwords = 64 x 0x40, although only 48 voices exist).",
+   "locals": {
+    "@r11:0x618": "n",
+    "@r12:0x620": "v"
+   }
+  },
+  {
+   "addr": "0x638",
+   "name": "midi_in_flush",
+   "signature": "void midi_in_flush(void)",
+   "confidence": "high",
+   "source": "src/arm/init.c",
+   "plate": "Reads the AICA MIDI-in FIFO register four times to drain it."
+  },
+  {
+   "addr": "0x654",
+   "name": "aica_silence_all",
+   "signature": "void aica_silence_all(void)",
+   "confidence": "high",
+   "source": "src/arm/init.c",
+   "plate": "MVOL=0, then for all 64 channels: ctl = 0x8000 (KYONEX, KYONB=0, SA_hi/PCMS 0 -> key off) and env_dr = 0x1F (RR=0x1F fastest release, DL/KRS/LPSLNK 0). Each KYONEX write re-executes key on/off for all channels (harmless: all are off).",
+   "locals": {
+    "@r0:0x660": "ch",
+    "@r2:0x668": "n"
+   }
+  },
+  {
+   "addr": "0x85c",
+   "name": "voice_monitor_sample",
+   "signature": "void voice_monitor_sample(void)",
+   "confidence": "high",
+   "source": "src/arm/monitor.c",
+   "plate": "Reads AICA_MON_EG (LP15 SGC14:13 EG12:0) of the channel selected by MSLC and stores g_voice[monitor_slot].level:\n  SGC != 3 (attack/decay/sustain) -> 0xFF; SGC == 3 (release): EG & 0x1F00 -> 0, else 0xFF - EG.\nThe EG read belongs to the channel selected by the previous voice_monitor_next (the main loop always calls sample before next). Used to find silent voices to reuse/steal.",
+   "locals": {
+    "@r0:0x880": "eg",
+    "@HASH:3df86fd4cb2:0x878": "sgc",
+    "@r0:0x888": "level"
+   }
+  },
+  {
+   "addr": "0x8a0",
+   "name": "voice_monitor_next",
+   "signature": "void voice_monitor_next(void)",
+   "confidence": "high",
+   "source": "src/arm/monitor.c",
+   "plate": "monitor_slot = (monitor_slot+1 == 48) ? 0 : monitor_slot+1; byte store slot&0x3F to 0x80280D (MSLC bits 13:8; AFSEL bit14 = 0 -> amplitude EG). Only the low 48 AICA channels are driver voices.",
+   "locals": {
+    "@r1:0x8a8": "slot"
+   }
+  },
+  {
+   "addr": "0x8d0",
+   "name": "dsp_out_clear",
+   "signature": "void dsp_out_clear(void)",
+   "confidence": "high",
+   "source": "src/arm/init.c",
+   "plate": "Zeroes 18 dwords at 0x802000 (DSP output EFSDL/EFPAN for the 16 EFREG + 2 CDDA/EXTS inputs).",
+   "locals": {
+    "@r0:0x8dc": "reg",
+    "@r2:0x8d8": "n"
+   }
+  },
+  {
+   "addr": "0x9a8",
+   "name": "voice_service_x4",
+   "signature": "void voice_service_x4(void)",
+   "confidence": "high",
+   "source": "src/arm/event.c",
+   "plate": "Called on every main-loop pass (not tick driven): 4 x midi_event_dispatch(midi_event_pop()). An empty ring yields event 0 which the dispatcher ignores.",
+   "locals": {
+    "@r1:0x9ac": "ev"
+   }
+  },
+  {
+   "addr": "0x15a4",
+   "name": "midi_in_isr",
+   "signature": "void midi_in_isr(void)",
+   "confidence": "high",
+   "source": "src/arm/midi_in.c",
+   "plate": "Drains the AICA MIDI-in FIFO (AICA_MIDI_IN: bit8 MIEMP empty -> return, bit10 MIOVF overflow, bits7:0 data).\nMIOVF sets midi_in_overflow (0x162B); while it is set bytes are dropped until a status byte (bit7), which clears it and midi_in_sysex.\nRunning-status parser: midi_in_state (0x1624) = address of the code consuming the next data byte (0 = discard): 0x1668 data1, 0x1678 data2 -> push, back to 0x1668; 0x16AC 2-byte data -> push(status, b, 0), stays.\nStatus 8x/9x/Ax/Bx/Ex -> 3-byte, Cx/Dx -> 2-byte; F0 and F2-F7 reset the state (running status byte kept), F1 and F8-FF ignored (quirk: F1's data byte is parsed as running-status data).\nmidi_in_sysex (0x1620) is tested but never set nonzero. Complete messages go to midi_event_push_ext (port 7).",
+   "locals": {
+    "temp_13f86fecd2d|uVar1|uVar2": "v",
+    "bVar1": "b"
+   }
+  },
+  {
+   "addr": "0x16cc",
+   "name": "midi_event_push_ext",
+   "signature": "void midi_event_push_ext(uint status, uint data1, uint data2)",
+   "confidence": "high",
+   "source": "src/arm/midi_in.c",
+   "plate": "Packs an external MIDI message into a 32-bit event and appends it to the event ring at 0xB000 (write offset at 0x13000, masked with 0xFFF).\nEvent: [31:27]=0x1F flags, [26:24]=(status>>4)&7 message type, [23:16]=0x70|channel (port 7), [15:8]=data1&0xFF, [7:0]=data2&0xFF. Clobbers r3-r6.\nNOTE: no ring-full check.",
+   "params": [
+    {
+     "name": "status",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "data1",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "data2",
+     "type": "uint",
+     "reg": "r2"
+    }
+   ]
+  },
+  {
+   "addr": "0x1564",
+   "name": "midi_event_pop",
+   "signature": "uint midi_event_pop(void)",
+   "confidence": "high",
+   "source": "src/arm/event.c",
+   "plate": "Pops one 32-bit event from the ring at 0xB000 (read offset 0x13004, write offset 0x13000; offsets & 0xFFF). Returns it in r1, 0 when empty.\nNo full detection here (only seq_evq_push checks); a stored 0 event looks like 'empty'.",
+   "params": [],
+   "ret": {
+    "type": "uint",
+    "reg": "r1"
+   },
+   "locals": {
+    "@r1:0x157c": "ev"
+   }
+  },
+  {
+   "addr": "0x0",
+   "name": "vec_reset",
+   "signature": "void vec_reset(void)",
+   "confidence": "high",
+   "source": "src/arm/main.c",
+   "plate": "ARM exception vector 0x0: b drv_reset"
+  },
+  {
+   "addr": "0x4",
+   "name": "vec_undef",
+   "signature": "void vec_undef(void)",
+   "confidence": "high",
+   "source": "src/arm/main.c",
+   "plate": "ARM exception vector 0x4: b exc_ignore"
+  },
+  {
+   "addr": "0x8",
+   "name": "vec_swi",
+   "signature": "void vec_swi(void)",
+   "confidence": "high",
+   "source": "src/arm/main.c",
+   "plate": "ARM exception vector 0x8: b exc_ignore"
+  },
+  {
+   "addr": "0xc",
+   "name": "vec_pabort",
+   "signature": "void vec_pabort(void)",
+   "confidence": "high",
+   "source": "src/arm/main.c",
+   "plate": "ARM exception vector 0xc: b exc_ignore"
+  },
+  {
+   "addr": "0x10",
+   "name": "vec_dabort",
+   "signature": "void vec_dabort(void)",
+   "confidence": "high",
+   "source": "src/arm/main.c",
+   "plate": "ARM exception vector 0x10: b exc_ignore"
+  },
+  {
+   "addr": "0x14",
+   "name": "vec_addrexc",
+   "signature": "void vec_addrexc(void)",
+   "confidence": "high",
+   "source": "src/arm/main.c",
+   "plate": "ARM exception vector 0x14: b exc_ignore"
+  },
+  {
+   "addr": "0x18",
+   "name": "vec_irq",
+   "signature": "void vec_irq(void)",
+   "confidence": "high",
+   "source": "src/arm/main.c",
+   "plate": "ARM exception vector 0x18: b exc_ignore"
+  },
+  {
+   "addr": "0x1c",
+   "name": "vec_fiq",
+   "signature": "void vec_fiq(void)",
+   "confidence": "high",
+   "source": "src/arm/main.c",
+   "plate": "ARM exception vector 0x1c: b fiq_handler"
+  }
+ ],
+ "labels": [
+  {
+   "addr": "0xf8",
+   "name": "drv_status",
+   "type": "dword",
+   "comment": "0xFF while initialising, 'SEGA' when ready (polled by SH-4)"
+  },
+  {
+   "addr": "0xfc",
+   "name": "midi_irq_flag",
+   "type": "dword",
+   "comment": "set to -1 by the FIQ handler on every MIDI-in interrupt; not read by the driver"
+  },
+  {
+   "addr": "0x22c",
+   "name": "tick4ms_flag",
+   "type": "byte",
+   "comment": "set by FIQ every 4 ms, cleared by main loop"
+  },
+  {
+   "addr": "0x22d",
+   "name": "tick_sub4",
+   "type": "byte",
+   "comment": "1 ms sub-counter modulo 4"
+  },
+  {
+   "addr": "0x22e",
+   "name": "tick1ms_flag",
+   "type": "byte",
+   "comment": "set by FIQ every 1 ms, cleared by main loop"
+  },
+  {
+   "addr": "0x230",
+   "name": "fiq_count",
+   "type": "dword",
+   "comment": "total FIQs taken"
+  },
+  {
+   "addr": "0x244",
+   "name": "exc_lr_save",
+   "type": "dword"
+  },
+  {
+   "addr": "0x31c",
+   "name": "tima_reload",
+   "type": "dword",
+   "comment": "0xD4: 256-0xD4 = 44 samples = 0.998 ms"
+  },
+  {
+   "addr": "0x320",
+   "name": "tick_drift_count",
+   "type": "dword",
+   "comment": "counts down 441..0; on 0 one tick is dropped"
+  },
+  {
+   "addr": "0x324",
+   "name": "tick_drift_reload",
+   "type": "dword"
+  },
+  {
+   "addr": "0x8cc",
+   "name": "monitor_slot",
+   "type": "byte",
+   "comment": "current MSLC channel 0..47"
+  },
+  {
+   "addr": "0x13418",
+   "name": "tick4ms_count"
+  },
+  {
+   "addr": "0x1341c",
+   "name": "midi_irq_count"
+  },
+  {
+   "addr": "0x13424",
+   "name": "master_vol"
+  },
+  {
+   "addr": "0x13400",
+   "name": "host_cmd_pending"
+  },
+  {
+   "addr": "0x13000",
+   "name": "evq_write_ofs",
+   "comment": "event ring write offset (0..0xFFC)"
+  },
+  {
+   "addr": "0x13004",
+   "name": "evq_read_ofs",
+   "comment": "event ring read offset"
+  },
+  {
+   "addr": "0x1340c",
+   "name": "cmd_log_ofs",
+   "comment": "offset into cmd_log ring"
+  },
+  {
+   "addr": "0x14800",
+   "name": "cmd_log",
+   "comment": "host command history ring (16-byte entries)"
+  },
+  {
+   "addr": "0x1620",
+   "name": "midi_in_sysex",
+   "type": "dword"
+  },
+  {
+   "addr": "0x1624",
+   "name": "midi_in_state",
+   "type": "dword",
+   "comment": "continuation address for next data byte (0 = expect status)"
+  },
+  {
+   "addr": "0x1628",
+   "name": "midi_in_status",
+   "type": "byte"
+  },
+  {
+   "addr": "0x1629",
+   "name": "midi_in_data1",
+   "type": "byte"
+  },
+  {
+   "addr": "0x162b",
+   "name": "midi_in_overflow",
+   "type": "byte"
+  },
+  {
+   "addr": "0x2a8",
+   "name": "timer_a_service"
+  },
+  {
+   "addr": "0x328",
+   "name": "midi_irq_service"
+  },
+  {
+   "addr": "0x34c",
+   "name": "fiq_exit"
+  },
+  {
+   "addr": "0x1724",
+   "name": "midi_in_system"
+  },
+  {
+   "addr": "0x1658",
+   "name": "midi_in_st_3byte"
+  },
+  {
+   "addr": "0x1668",
+   "name": "midi_in_st_data1"
+  },
+  {
+   "addr": "0x1678",
+   "name": "midi_in_st_data2"
+  },
+  {
+   "addr": "0x169c",
+   "name": "midi_in_st_2byte"
+  },
+  {
+   "addr": "0x16ac",
+   "name": "midi_in_st_2b_data"
+  },
+  {
+   "addr": "0x368",
+   "name": "fiq_stack",
+   "comment": "FIQ stack (grows down from 0x3CC)"
+  },
+  {
+   "addr": "0x3a8",
+   "name": "fiq_save_r0_r7",
+   "type": "dword[8]",
+   "comment": "r0-r7 saved around midi_in_isr"
+  },
+  {
+   "addr": "0x3c8",
+   "name": "fiq_save_lr",
+   "type": "dword"
+  },
+  {
+   "addr": "0x80280d",
+   "name": "AICA_MSLC_CH",
+   "type": "byte",
+   "comment": "MSLC (monitor channel select), high byte of 0x80280C"
+  },
+  {
+   "addr": "0x13408",
+   "name": "sndram_free_base",
+   "type": "dword",
+   "comment": "set to 0x18000 at boot (start of SH-4-managed bank memory); no ARM code reads it (tentative name)"
+  },
+  {
+   "addr": "0x13474",
+   "name": "fx_prg_cur",
+   "type": "byte",
+   "comment": "loaded FX program, 0xFF = none (set by clear_host_area)"
+  },
+  {
+   "addr": "0x8028a0",
+   "name": "AICA_SCIPD",
+   "comment": "ARM int pending (write bit5 = SH-4 -> ARM doorbell)"
+  },
+  {
+   "addr": "0x8028b4",
+   "name": "AICA_MCIEB",
+   "comment": "SH-4 int enable"
+  },
+  {
+   "addr": "0x8028b8",
+   "name": "AICA_MCIPD",
+   "comment": "SH-4 int pending (write bit5 = ARM -> SH-4 doorbell)"
+  },
+  {
+   "addr": "0x8028bc",
+   "name": "AICA_MCIRE",
+   "comment": "SH-4 int reset"
+  }
+ ],
+ "comments": [
+  {
+   "addr": "0x118",
+   "kind": "eol",
+   "text": "drv_status = 0xFF (initialising)"
+  },
+  {
+   "addr": "0x184",
+   "kind": "eol",
+   "text": "drv_status = 'SEGA' (bytes of the credit string at 0x38)"
+  },
+  {
+   "addr": "0x190",
+   "kind": "eol",
+   "text": "enable FIQ"
+  },
+  {
+   "addr": "0x2b0",
+   "kind": "eol",
+   "text": "reload Timer A"
+  },
+  {
+   "addr": "0x2d0",
+   "kind": "eol",
+   "text": "every 441st interrupt is not counted by the 4 ms clock (440 x 4 = 0.44 s exactly); the 1 ms flag was already raised"
+  },
+  {
+   "addr": "0x33c",
+   "kind": "eol",
+   "text": "midi_irq_flag = 0xFFFFFFFF"
+  },
+  {
+   "addr": "0x2c4",
+   "kind": "eol",
+   "text": "tick1ms_flag = 0xFF on every Timer A interrupt"
+  },
+  {
+   "addr": "0x310",
+   "kind": "eol",
+   "text": "4 ms tick supersedes the 1 ms work"
+  },
+  {
+   "addr": "0x354",
+   "kind": "pre",
+   "text": "INTCLR written 4 times before returning (irq_init uses 8 writes)"
+  },
+  {
+   "addr": "0x15c4",
+   "kind": "pre",
+   "text": "after an overflow, discard data bytes until the next status byte"
+  },
+  {
+   "addr": "0x15f0",
+   "kind": "eol",
+   "text": "midi_in_sysex is never set nonzero anywhere (vestigial)"
+  },
+  {
+   "addr": "0x180",
+   "kind": "eol",
+   "text": "'SEGA' = word at 0x38 inside the credit string"
+  },
+  {
+   "addr": "0x1b4",
+   "kind": "eol",
+   "text": "1 ms pass: restart without testing tick4ms_flag"
+  },
+  {
+   "addr": "0x254",
+   "kind": "eol",
+   "text": "dead: r11_fiq is never read"
+  },
+  {
+   "addr": "0x2d4",
+   "kind": "eol",
+   "text": "stores the decremented count, or the reload value when it hit 0"
+  },
+  {
+   "addr": "0x364",
+   "kind": "eol",
+   "text": "return to LR-4, CPSR restored from SPSR_fiq"
+  },
+  {
+   "addr": "0x240",
+   "kind": "eol",
+   "text": "pc = LR-4, CPSR = SPSR"
+  },
+  {
+   "addr": "0x5a8",
+   "kind": "eol",
+   "text": "flv_ofs[i] high bytes: flv_ofs[0..4] = 0x2000"
+  },
+  {
+   "addr": "0x590",
+   "kind": "eol",
+   "text": "byte store: cutoff = 0x40 (upper bytes zeroed above)"
+  },
+  {
+   "addr": "0x5e8",
+   "kind": "eol",
+   "text": "prog = bank + prog_ofs[0]"
+  },
+  {
+   "addr": "0x88c",
+   "kind": "eol",
+   "text": "SGC = (EG reg >> 13) & 3; != 3 (not release) -> 0xFF"
+  },
+  {
+   "addr": "0x880",
+   "kind": "eol",
+   "text": "EG >= 0x100 -> 0xFF, then ^0xFF -> level 0 (silent)"
+  },
+  {
+   "addr": "0x8b0",
+   "kind": "eol",
+   "text": "r0 = 48-(slot+1) = 0 on wrap"
+  },
+  {
+   "addr": "0x15e0",
+   "kind": "eol",
+   "text": "resync on a status byte also clears midi_in_sysex"
+  }
+ ],
+ "code": [
+  "0x17b0"
+ ],
+ "disasm": [
+  "0x16ac"
+ ],
+ "flow_overrides": [
+  {
+   "addr": "0x0",
+   "type": "CALL_RETURN"
+  },
+  {
+   "addr": "0x4",
+   "type": "CALL_RETURN"
+  },
+  {
+   "addr": "0x8",
+   "type": "CALL_RETURN"
+  },
+  {
+   "addr": "0xc",
+   "type": "CALL_RETURN"
+  },
+  {
+   "addr": "0x10",
+   "type": "CALL_RETURN"
+  },
+  {
+   "addr": "0x14",
+   "type": "CALL_RETURN"
+  },
+  {
+   "addr": "0x18",
+   "type": "CALL_RETURN"
+  },
+  {
+   "addr": "0x1c",
+   "type": "CALL_RETURN"
+  }
+ ],
+ "program_info": {
+  "executable_path": "bin/manatee_arm.bin",
+  "fsrl": "file:///bin/manatee_arm.bin"
+ }
+}

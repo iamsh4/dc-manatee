@@ -1,0 +1,10 @@
+# Copyrighted game/driver data and everything derived from it is never committed.
+/data/
+/bin/
+/ghidra/
+/src/arm/tables.c
+# Build and analysis outputs
+/build/
+/out/
+__pycache__/
+.DS_Store

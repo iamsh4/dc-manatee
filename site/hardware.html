@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dreamcast audio hardware · Dreamcast audio &amp; the Manatee driver</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <button id="nav-toggle" class="icon-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+<circle cx="16" cy="16" r="15" fill="none" stroke="var(--c-aica)" stroke-width="2"/>
+<path d="M5 16 C8 6, 11 6, 13 16 S18 26, 20 16 S25 8, 27 16" fill="none" stroke="var(--c-arm)" stroke-width="2.4" stroke-linecap="round"/>
+</svg><span>Manatee <small>· Dreamcast audio &amp; sound driver, explained</small></span></a>
+  <div class="spacer"></div>
+  <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme"></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" aria-label="Pages"></nav>
+  <main>
+    <article class="content">
+<div class="eyebrow">The hardware</div>
+<h1>Dreamcast audio hardware</h1>
+<p class="lead">Sound on the Dreamcast is a separate computer inside the console: a Yamaha AICA chip with its
+own CPU, memory, voices and effects processor. The main CPU only reaches it over a slow side bus.</p>
+
+<h2 id="two-computers">Two computers, one sound system</h2>
+<div class="grid two">
+  <div class="card">
+    <span class="chip host"><i></i>SH-4 side</span>
+    <h4 style="margin:12px 0 6px;font-size:18px">Hitachi SH-4, 200 MHz</h4>
+    <p>Runs the game. Sound is a library call away: Sega's <strong>sd</strong> sound library (Soul Calibur links version
+    1.00.18) turns calls like <code>sdMidiPlay</code> or <code>sdPstmPlay</code> into small command
+    records, uploads sound data, and polls status. The SH-4 cannot play a note itself; everything audible
+    happens in the AICA.</p>
+  </div>
+  <div class="card">
+    <span class="chip aica"><i></i>AICA side</span>
+    <h4 style="margin:12px 0 6px;font-size:18px">Yamaha AICA</h4>
+    <p>A complete sound subsystem on one chip: an <strong>ARM7DI</strong> CPU, a
+    <strong>64-channel</strong> sample player, an effects <strong>DSP</strong>, a mixer and DAC interface,
+    three timers, an interrupt controller and a MIDI UART, all built around <strong>2 MB of sound RAM</strong>.
+    The ARM runs whatever program the SH-4 loads into that RAM: for most games built on Sega's SDK,
+    that is the <strong>Manatee</strong> sound driver.</p>
+  </div>
+</div>
+
+<h2 id="g2-bus">Holly and the G2 bus</h2>
+<p>The SH-4 does not have a direct wire to the AICA. It reaches it through <strong>Holly</strong>, the
+system ASIC that also contains the PowerVR graphics core. Holly bridges the SH-4's bus to the
+<strong>G2 bus</strong>, a slow peripheral bus shared with the modem and the expansion port.</p>
+<ul>
+  <li><strong>Everything is memory-mapped.</strong> From the SH-4, the AICA's registers appear at
+  <code>0x00700000</code> and sound RAM at <code>0x00800000</code> (normally accessed uncached, through the
+  <code>0xA0xxxxxx</code> mirror).</li>
+  <li><strong>It is slow.</strong> Each access crosses the bridge and competes with the AICA's own use of
+  sound RAM. Software must respect the G2 write FIFO before writing (Sega's library wraps every access in
+  helpers that do this).</li>
+  <li><strong>Bulk copies use DMA.</strong> Holly has G2 DMA channels that copy main RAM to sound RAM
+  without the CPU; the sd library uses them (or plain CPU copies) to upload banks, stream data and the
+  command mailbox.</li>
+  <li><strong>Interrupts from the AICA</strong> to the SH-4 are routed through Holly's interrupt
+  controller.</li>
+</ul>
+
+<h2 id="aica-blocks">Inside the AICA</h2>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 400" role="img" aria-label="AICA internal blocks">
+    <defs>
+      <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <rect class="aica" x="10" y="10" width="840" height="380" rx="14"/>
+    <g class="hover" data-tip="Sound RAM|2 MB SDRAM. Holds the driver's code and data, all sample data, stream ring buffers and the DSP delay line. Every block below reads or writes it.">
+      <rect class="mem" x="30" y="30" width="800" height="56" rx="9"/>
+      <text x="48" y="64" font-weight="700" font-size="16">Sound RAM · 2 MB</text>
+      <text x="240" y="64" class="t-sec" font-size="13">shared by ARM · voices · DSP · SH-4 (via G2) · DMA</text>
+    </g>
+    <g class="hover" data-tip="ARM7DI|32-bit ARMv3 core. Executes from sound RAM at address 0. Controls every other block through memory-mapped registers.">
+      <rect class="arm" x="30" y="116" width="190" height="112" rx="9"/>
+      <text x="46" y="142" font-weight="700" font-size="15">ARM7DI CPU</text>
+      <text x="46" y="164" class="t-sec" font-size="12.5">ARMv3, 32-bit</text>
+      <text x="46" y="182" class="t-sec" font-size="12.5">no Thumb, no halfwords</text>
+      <text x="46" y="200" class="t-sec" font-size="12.5">reset held by SH-4</text>
+      <text x="46" y="218" class="t-muted" font-size="12">FIQ is its only interrupt</text>
+    </g>
+    <g class="hover" data-tip="Sound generator|64 independent channels. Each fetches samples (16-bit PCM, 8-bit PCM or 4-bit ADPCM), resamples them to a pitch, and shapes them with an envelope, a resonant filter and LFOs.">
+      <rect class="aica" x="240" y="116" width="200" height="112" rx="9" style="fill:var(--surface-2)"/>
+      <text x="256" y="142" font-weight="700" font-size="15">Sound generator</text>
+      <text x="256" y="164" class="t-sec" font-size="12.5">64 channels ("slots")</text>
+      <text x="256" y="182" class="t-sec" font-size="12.5">pitch · envelope · filter</text>
+      <text x="256" y="200" class="t-sec" font-size="12.5">LFO · level · pan · sends</text>
+      <text x="256" y="218" class="t-muted" font-size="12">+ noise source</text>
+    </g>
+    <g class="hover" data-tip="DSP|Runs a 128-instruction program once per sample. Inputs: 16 mix buses from the voices + 2 external (CD) inputs. Outputs: 16 effect returns. Uses a ring buffer in sound RAM for delays.">
+      <rect class="dsp" x="460" y="116" width="180" height="112" rx="9"/>
+      <text x="476" y="142" font-weight="700" font-size="15">Effect DSP</text>
+      <text x="476" y="164" class="t-sec" font-size="12.5">128 steps / sample</text>
+      <text x="476" y="182" class="t-sec" font-size="12.5">16 in · 16 out</text>
+      <text x="476" y="200" class="t-sec" font-size="12.5">delay ring in RAM</text>
+      <text x="476" y="218" class="t-muted" font-size="12">coefficients · program</text>
+    </g>
+    <g class="hover" data-tip="Mixer|Sums voice direct outputs, DSP effect returns (each with its own level and pan) and the external inputs, applies master volume and feeds the DAC.">
+      <rect class="box" x="660" y="116" width="170" height="112" rx="9"/>
+      <text x="676" y="142" font-weight="700" font-size="15">Mixer → DAC</text>
+      <text x="676" y="164" class="t-sec" font-size="12.5">direct sends</text>
+      <text x="676" y="182" class="t-sec" font-size="12.5">effect returns</text>
+      <text x="676" y="200" class="t-sec" font-size="12.5">CD inputs · master vol</text>
+      <text x="676" y="218" class="t-muted" font-size="12">mono / stereo</text>
+    </g>
+    <g class="hover" data-tip="Timers|Timers A, B and C: 8-bit counters that count output samples (optionally every 2, 4 … 128 samples) and raise an interrupt on overflow.">
+      <rect class="box" x="30" y="258" width="190" height="112" rx="9"/>
+      <text x="46" y="284" font-weight="700" font-size="15">Timers A · B · C</text>
+      <text x="46" y="306" class="t-sec" font-size="12.5">count samples</text>
+      <text x="46" y="324" class="t-sec" font-size="12.5">interrupt on overflow</text>
+      <text x="46" y="342" class="t-muted" font-size="12">the driver uses A</text>
+    </g>
+    <g class="hover" data-tip="Interrupt controller|Collects ~11 sources (timers, MIDI, DMA, sample tick, 'the other CPU') and forwards them to the ARM (as prioritised FIQ levels) and/or to the SH-4.">
+      <rect class="box" x="240" y="258" width="200" height="112" rx="9"/>
+      <text x="256" y="284" font-weight="700" font-size="15">Interrupt controller</text>
+      <text x="256" y="306" class="t-sec" font-size="12.5">→ ARM: FIQ + level 0-7</text>
+      <text x="256" y="324" class="t-sec" font-size="12.5">→ SH-4: via Holly</text>
+      <text x="256" y="342" class="t-muted" font-size="12">each CPU can poke the other</text>
+    </g>
+    <g class="hover" data-tip="DMA|The AICA has its own DMA engine between sound RAM and the register space; the Dreamcast libraries mostly use Holly's G2 DMA instead.">
+      <rect class="box" x="460" y="258" width="180" height="112" rx="9"/>
+      <text x="476" y="284" font-weight="700" font-size="15">DMA · monitor</text>
+      <text x="476" y="306" class="t-sec" font-size="12.5">RAM ↔ register DMA</text>
+      <text x="476" y="324" class="t-sec" font-size="12.5">channel monitor:</text>
+      <text x="476" y="342" class="t-sec" font-size="12.5">envelope / play position</text>
+    </g>
+    <g class="hover" data-tip="MIDI & RTC|A MIDI UART (in/out FIFOs), and the real-time clock the Dreamcast BIOS keeps the date in. Neither is used by the game's sound.">
+      <rect class="box" x="660" y="258" width="170" height="112" rx="9"/>
+      <text x="676" y="284" font-weight="700" font-size="15">MIDI · RTC</text>
+      <text x="676" y="306" class="t-sec" font-size="12.5">MIDI UART</text>
+      <text x="676" y="324" class="t-sec" font-size="12.5">real-time clock</text>
+      <text x="676" y="342" class="t-muted" font-size="12">(BIOS date/time)</text>
+    </g>
+    <path class="wire" d="M125 86 V116" marker-end="url(#a2)" marker-start="url(#a2)"/>
+    <path class="wire" d="M340 86 V116" marker-end="url(#a2)"/>
+    <path class="wire" d="M550 86 V116" marker-end="url(#a2)" marker-start="url(#a2)"/>
+    <path class="wire" d="M440 172 H460" marker-end="url(#a2)"/>
+    <path class="wire" d="M640 172 H660" marker-end="url(#a2)"/>
+    <path class="wire" d="M340 228 V240 H720 V228" marker-end="url(#a2)"/>
+  </svg>
+  </div>
+  <figcaption><b>Figure 2.</b> Functional blocks of the AICA. All of them hang off the same sound RAM,
+  which is why the ARM runs far slower than its clock suggests.</figcaption>
+</figure>
+
+<h3>The ARM7DI</h3>
+<p>The sound CPU is an <strong>ARM7DI</strong>, an early ARM core implementing the <strong>ARMv3</strong>
+architecture. Compared with later ARM7s it has no Thumb instruction set and no halfword load/store
+instructions, which is visible in the driver: 16-bit values are assembled from bytes or extracted with
+shifts. Its nominal clock is about 22.6 MHz, but it fetches every instruction from the same sound RAM that
+64 voices and the DSP are reading at audio rate, so its real throughput is a fraction of that. A few
+consequences shape the whole driver:</p>
+<ul>
+  <li><strong>Everything is table driven.</strong> Pitch, pan and level conversions are table lookups
+  rather than maths.</li>
+  <li><strong>Work is batched on a 4 ms tick.</strong> Fades, sequencing and parameter updates happen 250
+  times a second, not per sample.</li>
+  <li><strong>The chip does the audio.</strong> The ARM never touches a sample: it only programs
+  registers. The sound generator and DSP do all real-time signal processing.</li>
+</ul>
+<p>The SH-4 controls the ARM's <strong>reset line</strong> (a bit in the AICA's control register): the
+ARM is held in reset while its program is being uploaded, then released. When released it starts
+executing at address 0 of sound RAM, the ARM reset vector.</p>
+
+<h3>Registers</h3>
+<p>Everything in the AICA is controlled through a 64 KB block of memory-mapped registers:</p>
+<div class="tablewrap"><table>
+  <tr><th>Block</th><th>What it controls</th></tr>
+  <tr><td>Channel registers</td><td>64 blocks of 128 bytes, one per voice: sample address and format,
+  loop points, envelope rates, pitch, LFO, sends, pan, level, filter levels and rates, key on/off.</td></tr>
+  <tr><td>Common registers</td><td>Master volume and mono/stereo, the DSP ring-buffer location, the
+  MIDI port, the channel monitor, DMA, the three timers, the two interrupt controllers, ARM reset.</td></tr>
+  <tr><td>DSP output mixer</td><td>Level and pan for each of the 16 DSP outputs and the 2 external (CD)
+  inputs.</td></tr>
+  <tr><td>DSP program</td><td>Coefficients, memory addresses, the 128-step microprogram and the DSP's
+  working registers.</td></tr>
+</table></div>
+
+<h2 id="memory-maps">Two views of the same memory</h2>
+<p>Sound RAM and the AICA registers are visible to both CPUs, at different addresses. This shared view is
+the entire communication channel between the game and the driver.</p>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 330" role="img" aria-label="SH-4 and ARM memory maps">
+    <text x="40" y="28" font-weight="700" font-size="15" class="f-host" style="fill:var(--c-host)">SH-4 physical view</text>
+    <text x="560" y="28" font-weight="700" font-size="15" style="fill:var(--c-arm)">ARM7 view</text>
+    <!-- SH-4 column -->
+    <g class="hover" data-tip="0x00700000|AICA registers as seen from the SH-4 (uncached mirror 0xA0700000).">
+      <rect class="box" x="40" y="44" width="260" height="56" rx="6"/>
+      <text x="56" y="68" font-size="14" font-weight="650">AICA registers</text>
+      <text x="56" y="88" class="t-mono t-sec" font-size="12">0x0070_0000</text></g>
+    <g class="hover" data-tip="0x00710000|The real-time clock.">
+      <rect class="box-soft" x="40" y="104" width="260" height="34" rx="6"/>
+      <text x="56" y="126" font-size="13" class="t-sec">RTC · 0x0071_0000</text></g>
+    <g class="hover" data-tip="0x00800000-0x009FFFFF|2 MB of sound RAM, reached across the G2 bus (uncached mirror 0xA0800000).">
+      <rect class="mem" x="40" y="160" width="260" height="140" rx="6"/>
+      <text x="56" y="186" font-size="14" font-weight="650">Sound RAM (2 MB)</text>
+      <text x="56" y="206" class="t-mono t-sec" font-size="12">0x0080_0000 – 0x009F_FFFF</text>
+      <text x="56" y="232" class="t-sec" font-size="12.5">writes: driver image, banks,</text>
+      <text x="56" y="250" class="t-sec" font-size="12.5">commands, stream data</text>
+      <text x="56" y="268" class="t-sec" font-size="12.5">reads: status, positions</text></g>
+    <!-- ARM column -->
+    <g class="hover" data-tip="0x00000000|Sound RAM starts at address 0 for the ARM: the driver's exception vectors live at the very start.">
+      <rect class="mem" x="560" y="44" width="260" height="140" rx="6"/>
+      <text x="576" y="70" font-size="14" font-weight="650">Sound RAM (2 MB)</text>
+      <text x="576" y="90" class="t-mono t-sec" font-size="12">0x0000_0000 – 0x001F_FFFF</text>
+      <text x="576" y="116" class="t-sec" font-size="12.5">code runs from here</text>
+      <text x="576" y="134" class="t-sec" font-size="12.5">(vectors at 0)</text></g>
+    <g class="hover" data-tip="0x00800000|The same AICA registers, at a different address for the ARM.">
+      <rect class="box" x="560" y="210" width="260" height="56" rx="6"/>
+      <text x="576" y="234" font-size="14" font-weight="650">AICA registers</text>
+      <text x="576" y="254" class="t-mono t-sec" font-size="12">0x0080_0000</text></g>
+    <!-- links -->
+    <path class="wire dash" d="M300 230 C 430 230, 430 114, 560 114" style="stroke:var(--c-mem)"/>
+    <path class="wire dash" d="M300 72 C 430 72, 430 238, 560 238"/>
+    <text x="378" y="150" class="t-muted" font-size="12">same RAM</text>
+    <text x="392" y="196" class="t-muted" font-size="12">same registers</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 3.</b> The SH-4 and the ARM see the same sound RAM and registers at different
+  addresses. A command the SH-4 writes to <code>0x00813200</code> is read by the ARM at <code>0x00013200</code>.</figcaption>
+</figure>
+
+<h2 id="interrupts">Timers and the interrupt controller</h2>
+<p>The AICA has one interrupt controller with two "customers":</p>
+<ul>
+  <li><strong>The ARM.</strong> About eleven sources (external pins, MIDI in, DMA done, "the SH-4 poked me",
+  timers A/B/C, MIDI out, and a per-sample tick) each have an enable, a pending and a reset bit. Every
+  source is also assigned a <strong>priority level from 0 to 7</strong>. When an enabled source fires, the
+  ARM's <strong>FIQ</strong> (fast interrupt) line is raised and a register reports the level of the source,
+  so the handler can jump straight to the right code.</li>
+  <li><strong>The SH-4.</strong> A parallel set of enable/pending/reset bits raises an interrupt towards the
+  main CPU, delivered through Holly.</li>
+</ul>
+<p>The three timers count <em>output samples</em> (44,100 per second), optionally divided by a power of two,
+and interrupt when they overflow. That makes them ideal for musical timing: they are locked to the audio
+clock. The Manatee driver uses Timer A for its heartbeat; see
+<a href="communication.html">SH-4 ↔ ARM communication</a> for exactly how.</p>
+
+<div class="callout hw">
+  <div class="title">Why FIQ?</div>
+  <p>On ARM, FIQ has its own banked copies of registers r8-r14, so a FIQ handler can do real work without
+  saving anything. The AICA only wires up FIQ (the normal IRQ line is never raised), so every
+  interrupt the driver receives arrives as a FIQ.</p>
+</div>
+
+<h2 id="cd-audio">CD audio</h2>
+<p>The GD-ROM drive can play Red Book audio tracks. Their samples are delivered digitally to the AICA's two
+<strong>external inputs</strong>, which pass through the DSP input stage and the output mixer like any other
+source. The driver exposes their volume and pan as "GD-DA" host commands, but otherwise leaves them alone.</p>
+
+      <nav class="pager" aria-label="Previous and next page"></nav>
+      <div class="footer">Reference build: the Manatee driver shipped in Soul Calibur (USA), v1.1 build 0x3F. Built from the decompilation in this repository (<code>src/arm/</code>, <code>docs/</code>). Hover diagram elements for details.</div>
+    </article>
+  </main>
+  <aside class="toc" aria-label="On this page"></aside>
+</div>
+</body>
+</html>

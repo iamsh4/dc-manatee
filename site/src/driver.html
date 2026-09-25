@@ -1,0 +1,245 @@
+<!-- title: Driver architecture -->
+<div class="eyebrow">The Manatee driver</div>
+<h1>Driver architecture</h1>
+<p class="lead">Manatee is a tiny real-time kernel: one interrupt, one loop, a handful of engines and a single
+queue of MIDI-style events that ties them together. Everything fits in 33 KB of hand-written ARM assembly.</p>
+
+<h2 id="engines">The engines</h2>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 420" role="img" aria-label="Manatee internal architecture">
+    <defs>
+      <marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <!-- inputs -->
+    <g data-tip="Host interface|Reads the command mailbox every 4 ms and calls the right engine. Also writes the status records the game reads.">
+      <rect class="host" x="16" y="30" width="170" height="86" rx="9"/>
+      <text x="30" y="56" font-weight="700" font-size="14">Host interface</text>
+      <text x="30" y="76" class="t-sec" font-size="12">commands from the game</text>
+      <text x="30" y="94" class="t-sec" font-size="12">status back to the game</text></g>
+    <g data-tip="MIDI input|Parses bytes arriving on the AICA's MIDI port (inside the FIQ) into events for port 7.">
+      <rect class="box" x="16" y="300" width="170" height="70" rx="9"/>
+      <text x="30" y="326" font-weight="700" font-size="14">MIDI input</text>
+      <text x="30" y="346" class="t-sec" font-size="12">external, port 7</text></g>
+    <!-- sequencer -->
+    <g data-tip="Sequencer|8 players (one per MIDI port) that read song data, and emit note-on/off, controller and program events on time.">
+      <rect class="arm" x="236" y="150" width="170" height="100" rx="9"/>
+      <text x="250" y="176" font-weight="700" font-size="14">Sequencer</text>
+      <text x="250" y="196" class="t-sec" font-size="12">8 song players</text>
+      <text x="250" y="214" class="t-sec" font-size="12">tempo · loops · calls</text>
+      <text x="250" y="232" class="t-sec" font-size="12">note-off queue</text></g>
+    <!-- event ring -->
+    <g data-tip="Event ring|1024 packed MIDI events. Everything musical goes through here; the main loop executes up to 4 per pass.">
+      <rect class="mem" x="456" y="150" width="130" height="100" rx="9"/>
+      <text x="470" y="176" font-weight="700" font-size="14">Event ring</text>
+      <text x="470" y="196" class="t-sec" font-size="12">1024 events</text>
+      <text x="470" y="214" class="t-sec" font-size="12">MIDI-shaped</text></g>
+    <!-- midi engine -->
+    <g data-tip="MIDI engine|8 ports × 16 channels of controller state; turns events into voices: note-on picks splits and allocates AICA channels 0-47.">
+      <rect class="arm" x="636" y="150" width="204" height="100" rx="9"/>
+      <text x="650" y="176" font-weight="700" font-size="14">MIDI engine</text>
+      <text x="650" y="196" class="t-sec" font-size="12">128 MIDI channels</text>
+      <text x="650" y="214" class="t-sec" font-size="12">48 voices · stealing</text>
+      <text x="650" y="232" class="t-sec" font-size="12">controllers · bend</text></g>
+    <!-- PCM -->
+    <g data-tip="PCM players|8 one-shot ports and 4 stereo stream ports sharing AICA channels 48-63.">
+      <rect class="arm" x="236" y="30" width="170" height="86" rx="9"/>
+      <text x="250" y="56" font-weight="700" font-size="14">PCM players</text>
+      <text x="250" y="76" class="t-sec" font-size="12">8 one-shot ports</text>
+      <text x="250" y="94" class="t-sec" font-size="12">4 stream ports</text></g>
+    <!-- FX -->
+    <g data-tip="FX manager|Validates, queues and loads DSP programs, applies output sets, positional pan.">
+      <rect class="dsp" x="236" y="300" width="170" height="70" rx="9"/>
+      <text x="250" y="326" font-weight="700" font-size="14">FX manager</text>
+      <text x="250" y="346" class="t-sec" font-size="12">DSP programs · outputs</text></g>
+    <!-- hardware -->
+    <g data-tip="AICA channels|Channels 0-47: MIDI voices. Channels 48-63: one-shots and streams.">
+      <rect class="aica" x="636" y="30" width="204" height="86" rx="9"/>
+      <text x="650" y="56" font-weight="700" font-size="14">AICA channels</text>
+      <text x="650" y="76" class="t-sec" font-size="12">0-47 MIDI voices</text>
+      <text x="650" y="94" class="t-sec" font-size="12">48-63 one-shots / streams</text></g>
+    <g data-tip="DSP|The AICA effect processor.">
+      <rect class="dsp" x="636" y="300" width="204" height="70" rx="9"/>
+      <text x="650" y="326" font-weight="700" font-size="14">AICA DSP</text>
+      <text x="650" y="346" class="t-sec" font-size="12">reverb program + outputs</text></g>
+    <!-- wires -->
+    <path class="wire" d="M186 73 H236" marker-end="url(#r1)"/>
+    <path class="wire" d="M140 116 V200 H236" marker-end="url(#r1)"/>
+    <path class="wire" d="M186 104 H212 V335 H236" marker-end="url(#r1)"/>
+    <path class="wire" d="M406 200 H456" marker-end="url(#r1)"/>
+    <path class="wire" d="M101 300 V282 H520 V250" marker-end="url(#r1)"/>
+    <text x="300" y="276" font-size="11" class="t-muted">external MIDI (FIQ)</text>
+    <path class="wire" d="M80 116 V136 H520 V150" marker-end="url(#r1)"/>
+    <text x="300" y="130" font-size="11" class="t-muted">raw MIDI from the game (sdMidiSendMes)</text>
+    <path class="wire" d="M586 200 H636" marker-end="url(#r1)"/>
+    <path class="wire" d="M738 150 V116" marker-end="url(#r1)"/>
+    <path class="wire" d="M406 73 H636" marker-end="url(#r1)"/>
+    <path class="wire" d="M406 335 H636" marker-end="url(#r1)"/>
+    <text x="16" y="404" font-size="12" class="t-muted">Arrows are control flow inside the driver. Everything runs on the main loop except MIDI input, which runs in the FIQ.</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 1.</b> Manatee's engines. The event ring in the middle is the one place where the
+  sequencer, raw MIDI from the game and external MIDI all meet the voice engine.</figcaption>
+</figure>
+
+<div class="grid two">
+  <div class="card"><strong>MIDI engine</strong><p>Owns AICA channels 0-47. Keeps full controller state for
+  8 ports × 16 MIDI channels, and turns note-on events into voices using tone banks. See
+  <a href="music.html">The MIDI engine &amp; voices</a>.</p></div>
+  <div class="card"><strong>Sequencer</strong><p>Eight song players, one per MIDI port, each with its own
+  tempo, volume, pan, pitch and priority, feeding events into the ring. See
+  <a href="sequencer.html">The sequencer</a>.</p></div>
+  <div class="card"><strong>PCM players</strong><p>Own AICA channels 48-63: eight one-shot ports for sound
+  effects and voices, four stream ports for streamed music. See <a href="sfx.html">One-shots &amp;
+  PCM streams</a>.</p></div>
+  <div class="card"><strong>FX manager</strong><p>Loads DSP programs cleanly, applies output mixes and
+  positional pan. See <a href="dsp.html">The DSP and effects</a>.</p></div>
+</div>
+
+<h2 id="channels">Who owns which channel</h2>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 120" role="img" aria-label="AICA channel ownership">
+    <g id="chbar"></g>
+    <rect x="20" y="30" width="615" height="40" rx="6" style="fill:var(--c-arm-soft); stroke:var(--c-arm); stroke-width:1.6"/>
+    <rect x="641" y="30" width="200" height="40" rx="6" style="fill:var(--c-aica-soft); stroke:var(--c-aica); stroke-width:1.6"/>
+    <text x="34" y="55" font-size="13.5" font-weight="650">channels 0-47 · MIDI voices (music and sequenced effects)</text>
+    <text x="655" y="55" font-size="13.5" font-weight="650">48-63 · PCM slots</text>
+    <text x="20" y="96" font-size="12" class="t-muted">Voice n always drives channel n. The 16 PCM slots are allocated by priority between one-shot and stream players.</text>
+  </svg>
+  </div>
+</figure>
+
+<h2 id="boot">Boot sequence</h2>
+<ol class="steps">
+  <li><strong>Reset vector</strong>Set the stack below the event ring, mask FIQ, mark the status word "initialising".</li>
+  <li><strong>Silence</strong>Master volume 0; key off all 64 channels with the fastest release.</li>
+  <li><strong>Clear and default</strong>Zero the host area, event ring, port/channel/voice state and player
+  state; give every MIDI channel power-on defaults (volume 100, expression 127, centred pan, the built-in tone
+  bank); install the built-in banks (tone banks, drum kits, the "e-reverb" DSP program, a default output mix)
+  in the bank table; mute and clear the DSP.</li>
+  <li><strong>Start the clock</strong>Master volume up; drain the MIDI input; assign interrupt levels; start
+  Timer A; enable its and MIDI-in's interrupts.</li>
+  <li><strong>Go</strong>Write "SEGA" to the status word, unmask FIQ and enter the main loop forever.</li>
+</ol>
+
+<h2 id="main-loop">The main loop</h2>
+<p>The loop never sleeps. On every pass it executes up to four queued events, then looks at the two flags the
+timer interrupt maintains:</p>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 330" role="img" aria-label="Main loop flow">
+    <defs>
+      <marker id="r2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <rect class="arm" x="30" y="30" width="220" height="56" rx="9"/>
+    <text x="46" y="54" font-weight="700" font-size="14">Execute ≤ 4 events</text>
+    <text x="46" y="74" class="t-sec" font-size="12">note on/off, controllers …</text>
+    <path class="wire" d="M250 58 H300" marker-end="url(#r2)"/>
+    <rect class="box" x="300" y="30" width="150" height="56" rx="28"/>
+    <text x="330" y="63" font-weight="650" font-size="13.5">1 ms flag?</text>
+    <path class="wire" d="M375 86 V126" marker-end="url(#r2)"/>
+    <text x="382" y="112" font-size="12" class="t-muted">no</text>
+    <path class="wire" d="M450 58 H500" marker-end="url(#r2)"/>
+    <text x="458" y="50" font-size="12" class="t-muted">yes</text>
+    <rect class="aica" x="500" y="30" width="330" height="56" rx="9"/>
+    <text x="516" y="54" font-weight="700" font-size="14">Envelope monitor</text>
+    <text x="516" y="74" class="t-sec" font-size="12">sample one voice, select the next</text>
+    <rect class="box" x="300" y="126" width="150" height="56" rx="28"/>
+    <text x="330" y="159" font-weight="650" font-size="13.5">4 ms flag?</text>
+    <path class="wire" d="M450 154 H500" marker-end="url(#r2)"/>
+    <text x="458" y="146" font-size="12" class="t-muted">yes</text>
+    <rect class="arm" x="500" y="116" width="330" height="200" rx="9"/>
+    <text x="516" y="140" font-weight="700" font-size="14">The 4 ms tick</text>
+    <g font-size="12" class="t-sec">
+      <text x="516" y="162" class="t-sec">1. host commands (if a batch is pending)</text>
+      <text x="516" y="182" class="t-sec">2. one-shot / stream players: fades, end detection</text>
+      <text x="516" y="202" class="t-sec">3. sequencer: advance 8 ports, emit due events</text>
+      <text x="516" y="222" class="t-sec">4. port fades: speed, volume, pan, pitch</text>
+      <text x="516" y="242" class="t-sec">5. voices: delayed key-ons, apply port changes</text>
+      <text x="516" y="262" class="t-sec">6. status records for the game</text>
+      <text x="516" y="282" class="t-sec">7. stream pitch · DSP ring buffer · FX load</text>
+      <text x="516" y="302" class="t-sec">8. envelope monitor</text>
+    </g>
+    <path class="wire" d="M375 182 V300 H140 V86" marker-end="url(#r2)"/>
+    <text x="150" y="292" font-size="12" class="t-muted">no → loop</text>
+    <path class="wire dash" d="M830 58 H846 V16 H140 V30" marker-end="url(#r2)"/>
+  </svg>
+  </div>
+  <figcaption><b>Figure 2.</b> The main loop. Events run as fast as the loop spins; everything that needs
+  steady timing runs on the 4 ms tick.</figcaption>
+</figure>
+<p>Because the event executor runs on every pass, a note triggered by the sequencer in step 3 of a tick
+typically sounds within microseconds of that tick, not 4 ms later. Parameter changes that affect already
+sounding voices (a port volume fade, say) are applied in step 5 of the same tick.</p>
+
+<h2 id="event-ring">The event ring: one language for everything</h2>
+<p>The key design decision in Manatee is that <strong>every musical action becomes a MIDI-style event</strong>
+in one ring of 1024 entries. Each event is a single 32-bit word:</p>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 110" role="img" aria-label="The parts of an event">
+    <g font-size="13.5" font-weight="650">
+      <rect class="arm" x="20" y="24" width="150" height="46" rx="7"/><text x="36" y="52">priority</text>
+      <rect class="box" x="176" y="24" width="150" height="46" rx="7"/><text x="192" y="52">message type</text>
+      <rect class="host" x="332" y="24" width="150" height="46" rx="7"/><text x="348" y="52">port 0-7</text>
+      <rect class="host" x="488" y="24" width="150" height="46" rx="7"/><text x="504" y="52">MIDI channel</text>
+      <rect class="box" x="644" y="24" width="196" height="46" rx="7"/><text x="660" y="52">two data bytes</text>
+    </g>
+    <text x="20" y="96" font-size="12" class="t-muted">Types: note off · note on · poly pressure · controller · program · channel pressure · pitch bend · system.</text>
+  </svg>
+  </div>
+</figure>
+<ul>
+  <li><strong>Producers:</strong> the sequencer (ports 0-7), the game directly (the "send MIDI message" host
+  command) and the MIDI input (port 7).</li>
+  <li><strong>Consumer:</strong> the main loop, four events per pass.</li>
+  <li><strong>Priority travels with the event.</strong> A port's priority is stamped on every note it plays
+  and becomes the voice's priority when it is allocated, so high-priority sounds can steal voices from music
+  but not the other way round.</li>
+  <li><strong>Overflow:</strong> the sequencer checks for a full ring and spills into its own overflow queue;
+  the other producers do not check.</li>
+</ul>
+
+<h2 id="memory">Sound RAM layout</h2>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 330" role="img" aria-label="Sound RAM layout">
+    <g font-size="12.5">
+      <g data-tip="Driver image|Vectors, header, code, built-in banks and tables (0x0000-0x82FF)."><rect class="arm" x="20" y="20" width="400" height="34" rx="5"/><text x="32" y="42" font-weight="650">0x00000  driver image (33 KB)</text></g>
+      <g data-tip="Stack|The main loop's stack, growing down towards the image from 0xB000."><rect class="box-soft" x="20" y="58" width="400" height="24" rx="5"/><text x="32" y="75" class="t-sec">stack (grows down to 0x0B000)</text></g>
+      <g data-tip="Event ring|1024 x 32-bit events."><rect class="mem" x="20" y="86" width="400" height="26" rx="5"/><text x="32" y="104">0x0B000  event ring</text></g>
+      <g data-tip="MIDI state|Port state (8), MIDI channel state (128), voice state (48)."><rect class="arm" x="20" y="116" width="400" height="34" rx="5"/><text x="32" y="138">0x0C000  ports · MIDI channels · voices</text></g>
+      <g data-tip="Sequencer|8 song players, overflow queue, pending note-offs."><rect class="arm" x="20" y="154" width="400" height="26" rx="5"/><text x="32" y="172">0x10000  sequencer</text></g>
+      <g data-tip="PCM players|24 players (8 one-shot + 8 stream channels) and 16 slot records."><rect class="arm" x="20" y="184" width="400" height="26" rx="5"/><text x="32" y="202">0x11000  one-shot / stream players</text></g>
+      <g data-tip="Host area|Command mailbox, system block, status records, bank table, command log. The SH-4 reads and writes here."><rect class="host" x="20" y="214" width="400" height="44" rx="5"/><text x="32" y="236" font-weight="650">0x13000  host interface</text><text x="32" y="252" class="t-sec" font-size="11.5">mailbox · status · bank table · log</text></g>
+      <g data-tip="Free RAM|About 1.9 MB managed by the SH-4: sound banks, samples, stream ring buffers, the DSP delay buffer."><rect class="mem" x="20" y="262" width="400" height="50" rx="5"/><text x="32" y="284" font-weight="650">0x18000 – 0x1FFFFF  free (≈ 1.9 MB)</text><text x="32" y="301" class="t-sec" font-size="11.5">banks · samples · stream rings · DSP buffer</text></g>
+    </g>
+    <text x="450" y="42" font-size="13" class="t-sec">The first 96 KB belong to the driver.</text>
+    <text x="450" y="64" font-size="13" class="t-sec">Everything above is managed by the game:</text>
+    <text x="450" y="84" font-size="13" class="t-sec">the SH-4 decides where each bank goes and</text>
+    <text x="450" y="104" font-size="13" class="t-sec">tells the driver through the bank table.</text>
+    <text x="450" y="140" font-size="12.5" class="t-muted">Not to scale: the free region is ~20× the</text>
+    <text x="450" y="158" font-size="12.5" class="t-muted">rest combined.</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 3.</b> Sound RAM as the ARM sees it. The SH-4 sees the same bytes at 0x00800000 +
+  offset.</figcaption>
+</figure>
+
+<h2 id="assembly">Written in assembly</h2>
+<p>Manatee was written by hand in ARM assembly (credits in the image name Sega's Digital Media group), and it
+shows in ways that matter when reading it:</p>
+<ul>
+  <li>there is no calling convention: routines take values in whatever registers are convenient and
+  sometimes return in two registers, or "return" to the instruction after the one they were called from
+  to signal success;</li>
+  <li>scratch variables live inside the code image, between routines;</li>
+  <li>many routines share tails or fall into each other;</li>
+  <li>jump tables of branch instructions implement every <code>switch</code>.</li>
+</ul>
+<p>The decompilation in this repository expresses all of that as ordinary C, preserving behaviour
+(including bugs), with a confidence rating per function. See <a href="quirks.html">Bugs, quirks &amp;
+confidence</a>.</p>

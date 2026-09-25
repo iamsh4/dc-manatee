@@ -1,0 +1,204 @@
+<!-- title: How an AICA channel makes sound -->
+<div class="eyebrow">The hardware</div>
+<h1>How an AICA channel makes sound</h1>
+<p class="lead">Each of the AICA's 64 channels is a complete little synthesizer voice: it plays a sample from
+sound RAM at any pitch, shapes it with an envelope, a resonant filter and an LFO, and sends it to the mixer
+and to the effects DSP. The driver's job is almost entirely to fill in these parameters and flip key-on.</p>
+
+<h2 id="signal-chain">The signal chain of one voice</h2>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 300" role="img" aria-label="Signal chain of one AICA channel">
+    <defs>
+      <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <g class="hover" data-tip="Sample memory|The channel reads sample data from sound RAM starting at its start address: 16-bit PCM, 8-bit PCM, 4-bit ADPCM, or the built-in noise generator instead.">
+      <rect class="mem" x="14" y="100" width="110" height="80" rx="9"/>
+      <text x="28" y="132" font-weight="700" font-size="14">Sample</text>
+      <text x="28" y="150" class="t-sec" font-size="12">in sound RAM</text>
+      <text x="28" y="168" class="t-muted" font-size="11.5">or noise</text></g>
+    <g class="hover" data-tip="Pitch &amp; loop|Advances through the sample at a rate set by octave + fraction, wraps between loop start and loop end, and interpolates between samples.">
+      <rect class="aica" x="150" y="100" width="130" height="80" rx="9"/>
+      <text x="164" y="132" font-weight="700" font-size="14">Pitch &amp; loop</text>
+      <text x="164" y="150" class="t-sec" font-size="12">playback rate</text>
+      <text x="164" y="168" class="t-muted" font-size="11.5">interpolation</text></g>
+    <g class="hover" data-tip="Filter|Resonant low-pass filter. Its cutoff follows a dedicated filter envelope; Q sets the resonance.">
+      <rect class="aica" x="306" y="100" width="130" height="80" rx="9"/>
+      <text x="320" y="132" font-weight="700" font-size="14">Filter</text>
+      <text x="320" y="150" class="t-sec" font-size="12">resonant low-pass</text>
+      <text x="320" y="168" class="t-muted" font-size="11.5">+ filter envelope</text></g>
+    <g class="hover" data-tip="Amplifier|Multiplies by the amplitude envelope (ADSR), the tremolo LFO and the channel's total level.">
+      <rect class="aica" x="462" y="100" width="130" height="80" rx="9"/>
+      <text x="476" y="132" font-weight="700" font-size="14">Amplifier</text>
+      <text x="476" y="150" class="t-sec" font-size="12">envelope · level</text>
+      <text x="476" y="168" class="t-muted" font-size="11.5">+ tremolo</text></g>
+    <g class="hover" data-tip="LFO|One low-frequency oscillator per channel (saw, square, triangle or noise) that can wobble pitch (vibrato) and amplitude (tremolo) at independent depths.">
+      <rect class="box" x="306" y="16" width="130" height="54" rx="9"/>
+      <text x="320" y="40" font-weight="700" font-size="14">LFO</text>
+      <text x="320" y="58" class="t-sec" font-size="12">vibrato · tremolo</text></g>
+    <path class="wire dash" d="M306 43 H215 V100" marker-end="url(#c1)"/>
+    <path class="wire dash" d="M436 43 H527 V100" marker-end="url(#c1)"/>
+    <path class="wire" d="M124 140 H150" marker-end="url(#c1)"/>
+    <path class="wire" d="M280 140 H306" marker-end="url(#c1)"/>
+    <path class="wire" d="M436 140 H462" marker-end="url(#c1)"/>
+    <!-- split -->
+    <path class="wire" d="M592 140 H620 V90 H650" marker-end="url(#c1)"/>
+    <path class="wire" d="M620 140 V200 H650" marker-end="url(#c1)"/>
+    <g class="hover" data-tip="Direct path|Straight to the stereo mixer with its own level and pan position (dry signal).">
+      <rect class="box" x="650" y="60" width="196" height="62" rx="9"/>
+      <text x="664" y="86" font-weight="700" font-size="14">Direct → mixer</text>
+      <text x="664" y="106" class="t-sec" font-size="12">direct level + pan (dry)</text></g>
+    <g class="hover" data-tip="Effect send|Into one of the DSP's 16 input buses at its own send level (wet). Many voices can share a bus.">
+      <rect class="dsp" x="650" y="170" width="196" height="62" rx="9"/>
+      <text x="664" y="196" font-weight="700" font-size="14">Send → DSP bus 0-15</text>
+      <text x="664" y="216" class="t-sec" font-size="12">bus select + send level (wet)</text></g>
+    <text x="14" y="236" class="t-muted" font-size="12">Key on starts the envelopes and the sample; key off moves both envelopes into release.</text>
+    <text x="14" y="258" class="t-muted" font-size="12">All of this runs in hardware at 44.1 kHz, 64 times in parallel; the ARM only writes the parameters.</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 1.</b> One channel, from sample memory to the two outputs. Hover the blocks.</figcaption>
+</figure>
+
+<h2 id="samples">Samples and formats</h2>
+<p>A channel does not generate waveforms; it <strong>plays recorded samples</strong> from sound RAM. The
+channel is given a start address and a format:</p>
+<div class="grid three">
+  <div class="card"><strong>16-bit PCM</strong><p>Full quality, 2 bytes per sample. Used for short, important
+  sounds and in the driver's own built-in test tones.</p></div>
+  <div class="card"><strong>8-bit PCM</strong><p>Half the memory; audibly noisier.</p></div>
+  <div class="card"><strong>4-bit ADPCM</strong><p>Yamaha's adaptive differential format: a quarter of the
+  memory of 16-bit. The dominant format for sound effects and voice samples, and available in a special
+  "long stream" mode used for streaming.</p></div>
+</div>
+<p>Instead of sample memory a channel can also take its input from a built-in <strong>noise
+generator</strong>; the driver's built-in drum kit uses it for a noise hit.</p>
+
+<h3>Loops</h3>
+<p>Every channel has a <strong>loop start</strong> and a <strong>loop end</strong> position. After key-on it
+plays from the beginning; when it reaches loop end it either stops (one-shot) or jumps back to loop start and
+continues forever. Sustained instruments loop a short, steady part of the waveform so a note can be held
+indefinitely from a tiny sample.</p>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 140" role="img" aria-label="Sample with loop points">
+    <rect class="mem" x="20" y="40" width="820" height="46" rx="6"/>
+    <rect x="420" y="40" width="360" height="46" style="fill: var(--c-aica-soft); stroke: var(--c-aica); stroke-width:1.6"/>
+    <path class="plot" style="stroke: var(--text-secondary)" d="M30 63 q10 -20 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0"/>
+    <text x="24" y="30" font-size="12" class="t-sec">start (key on)</text>
+    <text x="420" y="30" font-size="12" class="t-sec">loop start</text>
+    <text x="728" y="30" font-size="12" class="t-sec">loop end</text>
+    <path class="wire" d="M780 100 C 700 132, 500 132, 420 100" marker-end="url(#c1)"/>
+    <text x="540" y="136" font-size="12" class="t-muted">repeats while the note is held</text>
+    <text x="150" y="108" font-size="12" class="t-muted">attack portion, played once</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 2.</b> A looped sample: the attack plays once, then the loop region repeats.</figcaption>
+</figure>
+
+<h2 id="pitch">Pitch</h2>
+<p>The playback rate is set as an <strong>octave</strong> (from several octaves down to several up) plus a
+fine <strong>fraction within the octave</strong>. At octave 0, fraction 0 the sample plays at 44.1 kHz,
+its natural rate; each octave step doubles or halves it, and the fraction interpolates between. The
+hardware resamples with interpolation, so any pitch is possible from one recording.</p>
+<p>Musical pitch is exponential but the fraction is linear, so a driver needs a conversion. Manatee keeps
+two tables in its image: one maps a note (relative to the sample's root key) to an octave and semitone, the
+other maps a semitone and a fine offset (1/256 of a semitone) to the fraction. Pitch bend, vibrato from the
+LFO, fine tuning and speed changes all end up as small offsets on this scale.</p>
+
+<h2 id="envelope">The amplitude envelope</h2>
+<p>Each channel has a hardware <strong>envelope generator</strong> with five controls: an <em>attack rate</em>,
+a <em>first decay rate</em>, a <em>decay level</em> where the first decay stops, a <em>second decay
+rate</em> (the slow fade while a note is held) and a <em>release rate</em> applied after key-off. Rates run
+from 0 (stopped) to 31 (instant), and <em>key rate scaling</em> can make higher notes decay faster, like a
+real instrument.</p>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 280" role="img" aria-label="Amplitude envelope phases">
+    <line class="grid-line" x1="60" y1="30" x2="60" y2="230"/>
+    <line class="grid-line" x1="60" y1="230" x2="830" y2="230"/>
+    <line class="grid-line dash" x1="60" y1="110" x2="830" y2="110"/>
+    <text x="14" y="36" font-size="12" class="t-muted">loud</text>
+    <text x="14" y="234" font-size="12" class="t-muted">silent</text>
+    <text x="64" y="104" font-size="11.5" class="t-muted">decay level</text>
+    <g data-tip="Attack|From silence to full level at the attack rate.">
+      <rect class="hit" x="60" y="20" width="90" height="215"/>
+      <text x="80" y="256" font-size="12.5" class="t-sec">attack</text></g>
+    <g data-tip="Decay 1|Falls at the first decay rate until it reaches the decay level.">
+      <rect class="hit" x="150" y="20" width="120" height="215"/>
+      <text x="175" y="256" font-size="12.5" class="t-sec">decay 1</text></g>
+    <g data-tip="Decay 2 (sustain)|Keeps falling slowly at the second decay rate for as long as the key is held (0 = true sustain).">
+      <rect class="hit" x="270" y="20" width="360" height="215"/>
+      <text x="400" y="256" font-size="12.5" class="t-sec">decay 2 while held (sustain)</text></g>
+    <g data-tip="Release|After key-off, falls to silence at the release rate. The voice keeps sounding until it gets there.">
+      <rect class="hit" x="630" y="20" width="200" height="215"/>
+      <text x="690" y="256" font-size="12.5" class="t-sec">release</text></g>
+    <path class="plot" style="stroke: var(--c-aica)" d="M60 230 L150 34 C 190 70, 230 100, 270 110 L630 140 C 680 200, 720 222, 790 230"/>
+    <line class="wire dash" x1="630" y1="24" x2="630" y2="232" style="stroke: var(--c-arm)"/>
+    <text x="636" y="40" font-size="12" style="fill: var(--c-arm)" font-weight="650">key off</text>
+    <line class="wire dash" x1="60" y1="24" x2="60" y2="232" style="stroke: var(--c-arm)"/>
+    <text x="66" y="24" font-size="12" style="fill: var(--c-arm)" font-weight="650">key on</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 3.</b> The envelope phases (shape illustrative). Internally the AICA works in
+  attenuation, so "decay" means attenuation rising; the driver reads that attenuation back to judge how loud
+  a voice still is.</figcaption>
+</figure>
+
+<h2 id="filter">The resonant filter and its envelope</h2>
+<p>Each voice passes through a <strong>low-pass filter with resonance (Q)</strong>. Its cutoff is not a single
+value but a second envelope: five cutoff <em>levels</em> joined by four <em>rates</em> (attack, decay 1,
+decay 2, release). A typical brass or synth sound opens the filter quickly on the attack and lets it close
+while the note sustains, which is what makes a sound "bright then mellow". The filter can also be bypassed
+per voice.</p>
+
+<h2 id="lfo">The LFO</h2>
+<p>A low-frequency oscillator per channel, with a selectable waveform (saw, square, triangle or noise) and
+rate, modulates <strong>pitch</strong> (vibrato) and <strong>amplitude</strong> (tremolo) with independent
+depths. Manatee scales the tone's LFO depths by the MIDI modulation wheel, so a player (or a sequence) can
+fade vibrato in and out.</p>
+
+<h2 id="levels">Levels, pan and the two outputs</h2>
+<ul>
+  <li><strong>Total level</strong> attenuates the voice as a whole; the driver computes it from velocity,
+  channel volume and expression, the tone's own level and the port's master volume.</li>
+  <li><strong>Direct send</strong>: a level and a pan position (a few dozen steps from hard left through
+  centre to hard right) into the dry stereo mix.</li>
+  <li><strong>Effect send</strong>: a choice of one of the DSP's 16 input buses and a send level. The DSP
+  program decides what each bus means, and many voices can share one bus.</li>
+</ul>
+
+<h2 id="key-on-off">Key on and key off</h2>
+<p>A channel is started by setting its <strong>key-on bit</strong> and stopped by clearing it, but neither
+takes effect immediately: the change is committed by writing a separate <strong>"execute"</strong> bit. At
+that moment the AICA applies the key state of <em>every</em> channel at once. That is how two channels of a
+stereo stream are guaranteed to start on the very same sample: the driver sets up both, then executes once.</p>
+<div class="grid two">
+  <div class="card"><strong>Key on</strong><p>The address counter resets to the start, the envelope enters
+  attack, the filter envelope restarts and sound begins.</p></div>
+  <div class="card"><strong>Key off</strong><p>The sample keeps playing, but both envelopes switch to their
+  release rates. The voice only becomes silent (and reusable) when the release reaches the bottom. This is
+  why a voice allocator has to care about voices that are "off" but still audible.</p></div>
+</div>
+<div class="callout driver">
+  <div class="title">In Manatee</div>
+  <p>The driver often writes the execute bit on a channel while keeping that channel's key-on bit unchanged,
+  purely to commit other channels' changes. It also uses a <em>delayed</em> key-on: a tone layer can ask to
+  start a few ticks later, so the channel is fully programmed at note-on and only keyed on by the 4 ms update.</p>
+</div>
+
+<h2 id="monitor">Watching a channel: the monitor</h2>
+<p>The ARM cannot read back every channel's state. Instead the AICA has a <strong>monitor</strong>: select one
+channel, and two registers show its current envelope state and level, and its current play position.</p>
+<p>Manatee turns this into a round-robin: every millisecond it samples the selected MIDI voice's envelope
+and then selects the next one, so each of its 48 music voices is looked at roughly every 48 ms. The result,
+"how loud is this voice still?", drives voice stealing. The one-shot and stream players select their own
+channels in their 4 ms update to detect when a sample has finished and where a stream is playing.</p>
+
+<h2 id="register-images">How banks describe a voice</h2>
+<p>Because the hardware already does the synthesis, a Manatee sound bank does not contain "instrument
+algorithms"; it contains <strong>register images</strong>: for every sample, the exact values to write into a
+channel's registers (sample address and format, loop points, envelope, filter levels and rates, LFO, send and
+pan). Playing a sound is copying that image into a free channel, adjusting a few values (pitch, level, pan,
+sends), and keying on. The MIDI engine adds per-channel controller offsets on top of the image; one-shots are
+copied almost verbatim.</p>

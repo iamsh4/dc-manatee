@@ -1,0 +1,2760 @@
+{
+  "flow_overrides": [
+    {
+      "addr": "0x1878",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x187c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1880",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1884",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1888",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x188c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1890",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1894",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1898",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x189c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18a0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18a4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18a8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18ac",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18b0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18b4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18b8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18bc",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18c0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18c4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18c8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18cc",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18d0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18d4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18d8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18dc",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18e0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18e4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18e8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18ec",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18f0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18f4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18f8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x18fc",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1900",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1904",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1908",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x190c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1910",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1914",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1918",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x191c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1920",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1924",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1928",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x192c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1930",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1934",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1938",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x193c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1940",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1944",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1948",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x194c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1950",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1954",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1958",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x195c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1960",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1964",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1968",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x196c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1970",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1974",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1978",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x197c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1980",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1984",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1988",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x198c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1990",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1994",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1998",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x199c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19a0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19a4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19a8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19ac",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19b0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19b4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19b8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19bc",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19c0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19c4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19c8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19cc",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19d0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19d4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19d8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19dc",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19e0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19e4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19e8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19ec",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19f0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19f4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19f8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x19fc",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a00",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a04",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a08",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a0c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a10",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a14",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a18",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a1c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a20",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a24",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a28",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a2c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a30",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a34",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a38",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a3c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a40",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a44",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a48",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a4c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a50",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a54",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a58",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a5c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a60",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a64",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a68",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a6c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a70",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1a74",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2284",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2288",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x228c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2290",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2294",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2298",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x229c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x22a0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x22a4",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x1d30",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x26e0",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x26ec",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x271c",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2730",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x22e8",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2300",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2318",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2330",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2348",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2360",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x2378",
+      "type": "CALL_RETURN"
+    },
+    {
+      "addr": "0x28d8",
+      "type": "CALL_RETURN"
+    }
+  ],
+  "code": [
+    "0x1368",
+    "0x136c",
+    "0x13ec",
+    "0x13f0",
+    "0x14b8",
+    "0x185c",
+    "0x1a78",
+    "0x1a7c",
+    "0x1b20",
+    "0x1b44",
+    "0x1b90",
+    "0x1b98",
+    "0x1ba0",
+    "0x1c98",
+    "0x1d24",
+    "0x1d34",
+    "0x1d64",
+    "0x1d94",
+    "0x1dc4",
+    "0x1e84",
+    "0x1eb4",
+    "0x1ecc",
+    "0x1ee4",
+    "0x1efc",
+    "0x1f14",
+    "0x1fa0",
+    "0x1fbc",
+    "0x1fdc",
+    "0x1ffc",
+    "0x201c",
+    "0x20cc",
+    "0x20ec",
+    "0x21c8",
+    "0x21d4",
+    "0x2254",
+    "0x2264",
+    "0x2274",
+    "0x22c4",
+    "0x22dc",
+    "0x22f0",
+    "0x2308",
+    "0x2320",
+    "0x2338",
+    "0x2350",
+    "0x2368",
+    "0x2380",
+    "0x2390",
+    "0x2424",
+    "0x2434",
+    "0x2444",
+    "0x2454",
+    "0x246c",
+    "0x24a4",
+    "0x24d0",
+    "0x250c",
+    "0x257c",
+    "0x26bc",
+    "0x26f0",
+    "0x2734",
+    "0x2754",
+    "0x2774",
+    "0x2794",
+    "0x27b4",
+    "0x28c8"
+  ],
+  "disasm": [
+    "0x2284",
+    "0x2288",
+    "0x228c",
+    "0x2290",
+    "0x2294",
+    "0x2298",
+    "0x229c",
+    "0x22a0",
+    "0x22a4"
+  ],
+  "functions": [
+    {
+      "addr": "0x1368",
+      "name": "ev_poly_pressure",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Event type 2 (polyphonic key pressure): ignored.",
+      "params": [
+        {
+          "name": "ev",
+          "type": "uint",
+          "reg": "r1"
+        }
+      ]
+    },
+    {
+      "addr": "0x136c",
+      "name": "ev_program_change",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Event type 4. Re-resolves the bank from mc->bank_no via the bank table at 0x14080 (built-in 0x3E48 if the address is 0), then if data1 < BankHeader.num_progs sets program, prog = bank+prog_tab[p] and velcurve = bank+velcurve_tab; otherwise restores the old bank pointer.\nQuirk: ignores drum_kit (a CC32 drum-kit pointer is replaced by melodic bank bank_no).",
+      "params": [
+        {
+          "name": "ev",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch_ofs",
+          "type": "uint",
+          "reg": "r5"
+        },
+        {
+          "name": "port_chans",
+          "type": "byte *",
+          "reg": "r6"
+        }
+      ]
+    },
+    {
+      "addr": "0x13ec",
+      "name": "ev_channel_pressure",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Event type 5 (channel pressure): ignored.",
+      "params": [
+        {
+          "name": "ev",
+          "type": "uint",
+          "reg": "r1"
+        }
+      ]
+    },
+    {
+      "addr": "0x13f0",
+      "name": "ev_pitch_bend",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Event type 6. bend = (data2<<7|data1)-0x2000 -> mc->bend and scratch 0x14B0. For every sounding voice of the channel: bend_ofs = (bend*range)>>5 & 0xFFFF (range = bend_down if negative else bend_up; 1/256 semitone), then voice_set_pitch (0x14BC) with pitch_mod + bend_ofs + port pitch - 0x8000.",
+      "params": [
+        {
+          "name": "ev",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "ch_ofs",
+          "type": "uint",
+          "reg": "r5"
+        },
+        {
+          "name": "port_chans",
+          "type": "byte *",
+          "reg": "r6"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x14b8",
+      "name": "ev_system",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Event type 7 = MIDI status 0xF0-0xFF (type = status>>4 & 7): ignored. The SH-4 library never sends it (sdMidiSetMes zeroes system messages).",
+      "params": [
+        {
+          "name": "ev",
+          "type": "uint",
+          "reg": "r1"
+        }
+      ]
+    },
+    {
+      "addr": "0x185c",
+      "name": "ev_control_change",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Event type 3. Branch table at 0x1878 indexed by the controller number (128 x 'b handler'); r1 = value&0x7F, r5 = MidiChannel. Handlers: 1 mod, 6 data entry, 7 vol, 10 pan, 11 expr, 20-24/52-56 FLV0-4 ofs MSB/LSB, 25-28 filter EG rates, 32 bank select, 48 MIDI timing counter, 64 damper, 70 filter switch, 71/85 resonance, 72/86 release, 73/87 attack, 74 cutoff, 75 cutoff range, 76 DSP input, 77/78/79 (port 7) DSP out pan/level/effect program, 80 DSP coef preset, 88 decay level, 89 decay rate, 90 (unused), 91 reverb send, 96/97 data inc/dec, 98-101 NRPN/RPN select, 110-117 cutoff x2^0..2^7, 121 reset controllers (whole port). Others (incl. CC0, 120, 123) -> 0x1A78 no-op.",
+      "params": [
+        {
+          "name": "ev",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "ch_ofs",
+          "type": "uint",
+          "reg": "r5"
+        },
+        {
+          "name": "port_chans",
+          "type": "byte *",
+          "reg": "r6"
+        }
+      ]
+    },
+    {
+      "addr": "0x1a78",
+      "name": "cc_ignore",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Target of every unhandled controller number (just returns).",
+      "params": []
+    },
+    {
+      "addr": "0x1a7c",
+      "name": "cc_modulation",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC1. mc->mod = v; rescales PLFOS/ALFOS of the split's LFO register by (v+1)/128 on all voices of the channel, LFORE cleared.\nQuirk: no voice-active test (idle channels with stale port/ch get written too).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x1b20",
+      "name": "cc_data_entry",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC6. NRPN selected -> store only (ctl_nrpn_data_set); RPN selected -> falls into ctl_rpn_data_set; else ignored.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1b44",
+      "name": "ctl_rpn_data_set",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Stores RPN data (bit7 set) in rpn_data and interprets it using rpn_ref_msb/lsb (+0x20/+0x21) which are never written (CC99/101 write +0x22) -> every RPN is treated as RPN 0: bend_range = v|0x80. 0x7F/0x7F (null) would deselect.",
+      "params": [
+        {
+          "name": "d",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1b90",
+      "name": "ctl_nrpn_data_set",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "nrpn_data = d. NRPNs are not interpreted.",
+      "params": [
+        {
+          "name": "d",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1b98",
+      "name": "cc_volume",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC7. mc->volume = v, falls into ctl_apply_volume with r6 = expression.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x1ba0",
+      "name": "ctl_apply_volume",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Shared tail of CC7/CC11. level = (curve[a]+1)*(curve[b]+1)-1 >> 7 (curve = 0x3F28). Then for each sounding voice of the channel recompute Voice.vol = (velcurve[vel]+1)*(level+1)*(256-split.tl)-1 >> 14 and TL = 255-clamp(vol + port volume - 0x80).",
+      "params": [
+        {
+          "name": "a",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "b",
+          "type": "uint",
+          "reg": "r6"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x1c98",
+      "name": "cc_pan",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC10. mc->pan = v (overrides tone pan at note-on); live voices: DIPAN from clamp(v + port pan - 0x80) byte-written to AICA reg 0x24.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x1d24",
+      "name": "cc_expression",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC11. mc->expression = v, then ctl_apply_volume (branch into cc_volume's tail at 0x1BA0).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1d34",
+      "name": "cc_flv0_msb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC20. flv_ofs[0] = v<<7 | old LSB (14-bit, 0x2000 = no change) for FLV0 at note-on; lpoff = 0x7F (filter on).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "@unique:10000026:0x1d34": "flv0"
+      }
+    },
+    {
+      "addr": "0x1d64",
+      "name": "cc_flv1_msb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC21. flv_ofs[1] = v<<7 | old LSB (14-bit, 0x2000 = no change) for FLV1 at note-on; lpoff = 0x7F (filter on).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1d94",
+      "name": "cc_flv2_msb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC22. flv_ofs[2] = v<<7 | old LSB (14-bit, 0x2000 = no change) for FLV2 at note-on; lpoff = 0x7F (filter on).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1dc4",
+      "name": "cc_flv3_msb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC23. flv_ofs[3] = v<<7 | old LSB (14-bit, 0x2000 = no change) for FLV3 at note-on; lpoff = 0x7F (filter on). Also refreshes AICA FLV3 of live voices (inline copy of ctl_apply_flv3).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x1e84",
+      "name": "cc_flv4_msb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC24. flv_ofs[4] = v<<7 | old LSB (14-bit, 0x2000 = no change) for FLV4 at note-on; lpoff = 0x7F (filter on).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1eb4",
+      "name": "cc_fenv_far",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC25. far_ofs = v>>1 (0x20 = no change), filter EG FAR at note-on; lpoff = 0x7F.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1ecc",
+      "name": "cc_fenv_fd1r",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC26. fd1r_ofs = v>>1 (0x20 = no change), filter EG FD1R at note-on; lpoff = 0x7F.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1ee4",
+      "name": "cc_fenv_fd2r",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC27. fd2r_ofs = v>>1 (0x20 = no change), filter EG FD2R at note-on; lpoff = 0x7F.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1efc",
+      "name": "cc_fenv_frr",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC28. frr_ofs = v>>1 (0x20 = no change), filter EG FRR at note-on; lpoff = 0x7F.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1f14",
+      "name": "cc_bank_select",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC32 (the driver's bank number; CC0 is ignored). Melodic: bank_no = v, drv_err_flags(0x13420) |= 1 if table entry v has no addr/size. Drum channel (drum_kit bit0): v 0/1 -> bank entry 66/67; if loaded bank_no = v, bank = kit, else bank = built-in kit 0x4124 and error bit 0.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1fa0",
+      "name": "cc_midi_timing",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC48. Byte 0x13414 (sdDrvGetMidiTimmingCounter on the SH-4): v==0 clears, else increments.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        }
+      ]
+    },
+    {
+      "addr": "0x1fbc",
+      "name": "cc_flv0_lsb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC52. flv_ofs[0] low 7 bits = v; lpoff = 0x7F.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1fdc",
+      "name": "cc_flv1_lsb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC53. flv_ofs[1] low 7 bits = v; lpoff = 0x7F.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x1ffc",
+      "name": "cc_flv2_lsb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC54. flv_ofs[2] low 7 bits = v; lpoff = 0x7F.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x201c",
+      "name": "cc_flv3_lsb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC55. flv_ofs[3] low 7 bits = v; lpoff = 0x7F. Also refreshes AICA FLV3 of live voices.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x20cc",
+      "name": "cc_flv4_lsb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC56. flv_ofs[4] low 7 bits = v; lpoff = 0x7F.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x20ec",
+      "name": "cc_damper",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC64. sustain = v&0x40. Down: VOICE_HELD on all sounding voices of the channel (also already-released ones). Up: clear HELD and key off every sounding voice of the channel whose KEYON is clear, held or not (age = 0, ctl&0x3FF|KYONEX - also clears SSCTL), so voices already in release get a second key-off.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x21c8",
+      "name": "cc_filter_switch",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC70. lpoff = v: 0 tone LPOFF, 1..63 filter off, 64..127 filter on (note-on only).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x21d4",
+      "name": "cc_resonance",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC71 and CC85. q_ofs = v; live voices: Q = clamp(split.q + v-64, 0, 31) byte-written with the current LPOFF.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x2254",
+      "name": "cc_release",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC72 and CC86. rr_ofs = v>>1 (amp EG release, note-on).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2264",
+      "name": "cc_attack",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC73 and CC87. ar_ofs = v>>1 (amp EG attack, note-on).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2274",
+      "name": "cc_cutoff",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC74. Jumps through the 9-entry branch table at 0x2284 indexed by cutoff_range (CC75): range 0 and 8 -> x128 (cc_cutoff_k7), range n -> x2^(n-1).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x22c4",
+      "name": "cc_cutoff_range",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC75. cutoff_range = min(v,8)*4 (byte offset into the table at 0x2284). Not reset by CC121.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x22dc",
+      "name": "cc_cutoff_k0",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC110 (and CC74 via the scale table). cutoff = (v-64)<<0, then ctl_apply_flv3.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x22f0",
+      "name": "cc_cutoff_k1",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC111 (and CC74 via the scale table). cutoff = (v-64)<<1, then ctl_apply_flv3.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2308",
+      "name": "cc_cutoff_k2",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC112 (and CC74 via the scale table). cutoff = (v-64)<<2, then ctl_apply_flv3.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2320",
+      "name": "cc_cutoff_k3",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC113 (and CC74 via the scale table). cutoff = (v-64)<<3, then ctl_apply_flv3.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2338",
+      "name": "cc_cutoff_k4",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC114 (and CC74 via the scale table). cutoff = (v-64)<<4, then ctl_apply_flv3.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2350",
+      "name": "cc_cutoff_k5",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC115 (and CC74 via the scale table). cutoff = (v-64)<<5, then ctl_apply_flv3.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2368",
+      "name": "cc_cutoff_k6",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC116 (and CC74 via the scale table). cutoff = (v-64)<<6, then ctl_apply_flv3.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2380",
+      "name": "cc_cutoff_k7",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC117 (and CC74 via the scale table). cutoff = (v-64)<<7, then ctl_apply_flv3.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x2390",
+      "name": "ctl_apply_flv3",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "For each sounding voice of the channel: AICA FLV3 = split.flv[3] + flv_ofs[3]-0x2000 + cutoff, clamped to 8..0x1FF8 (only bits 15:13 of f+8 tested). Same code inlined in CC23/CC55.",
+      "params": [
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x2424",
+      "name": "cc_decay_level",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC88. dl_ofs = v>>1 (amp EG DL, note-on).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2434",
+      "name": "cc_decay_rate",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC89. dr_ofs = v>>1 (added to D1R and D2R at note-on).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2444",
+      "name": "cc_90",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC90. cc90_ofs(+0x3A) = v>>1; never read by the driver.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2454",
+      "name": "cc_dsp_input",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC76. isel = (v&0x70) ? 0x7F (tone ISEL) : v&0xF (DSP MIXS input for new notes).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x246c",
+      "name": "cc_dsp_out_pan",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC77, port 7 only: EFPAN of DSP output slot ch (byte at AICA 0x2000+ch*4) = MIDI pan conversion of v.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        }
+      ]
+    },
+    {
+      "addr": "0x24a4",
+      "name": "cc_dsp_out_level",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC78, port 7 only: EFSDL of DSP output slot ch (byte at AICA 0x2001+ch*4) = v>>3.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        }
+      ]
+    },
+    {
+      "addr": "0x24d0",
+      "name": "cc_dsp_program",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC79, port 7 only: v != 0 -> fx_prg_select(v-1) (0x5C98); v == 0 -> fx_prg_clear (0x5DCC). Same as host cmds 0x84/0x85.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        }
+      ]
+    },
+    {
+      "addr": "0x250c",
+      "name": "cc_fx_dsp_pan",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC80 (any port): pan of DSP effect slot ch. If the effect program has pan slots (fx_pan_mode: bit4 = 8 slots stride 8, else bit5 = 4 slots stride 4), copies equal-power preset v>>2 (4 gains, fx_pan_coef_tab 0x3C48) to COEF[fx_pan_coef_base + (ch&7 or ch&3) + k*stride]. Same as host cmd 0x88 for one slot.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        }
+      ]
+    },
+    {
+      "addr": "0x257c",
+      "name": "cc_reverb_send",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC91. v != 0: fx_send = 2v; live voices IMXL = clamp((2v>>4) + port fx_send ofs) with the tone ISEL (CC76 override lost). v == 0: fx_send = 0 and live IMXL forced to 0 (tone IMXL + port ofs - 0x20, carry-based clamp, then 'and r1,r1,#0' bug; new notes use the tone IMXL).",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "ch",
+          "type": "uint",
+          "reg": "r2"
+        },
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac",
+        "@r9:0x25d0": "busy_or_ac"
+      }
+    },
+    {
+      "addr": "0x26bc",
+      "name": "cc_data_inc",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC96. NRPN selected: nrpn_data+1 (adds on a byte never carries: 0xFF wraps to 0). RPN selected: 'add' without S, so 'movcs r1,#0xFF' tests the stale C flag left by midi_event_pop's 'cmp write,read' (nothing in between changes C): C set (ring not wrapped, the usual case) -> value is 0xFF outright, so bend_range becomes 0xFF (127 semitones); C clear -> rpn_data+1. Then ctl_rpn_data_set.",
+      "params": [
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x26f0",
+      "name": "cc_data_dec",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC97. NRPN: nrpn_data = max(v-1,0)|0x80. RPN: BUG - decrements nrpn_data's value (r1 still = +0x24) and stores it through ctl_rpn_data_set.",
+      "params": [
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2734",
+      "name": "cc_nrpn_lsb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC98. param_lsb = v; nrpn_data|=0x80, rpn_data&=0x7F. The stored number is never used.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2754",
+      "name": "cc_nrpn_msb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC99. param_msb = v; nrpn_data|=0x80, rpn_data&=0x7F. The stored number is never used.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2774",
+      "name": "cc_rpn_lsb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC100. param_lsb = v; rpn_data|=0x80, nrpn_data&=0x7F. The stored number is never used.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x2794",
+      "name": "cc_rpn_msb",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC101. param_msb = v; rpn_data|=0x80, nrpn_data&=0x7F. The stored number is never used.",
+      "params": [
+        {
+          "name": "val",
+          "type": "uint",
+          "reg": "r1"
+        },
+        {
+          "name": "mc",
+          "type": "MidiChannel *",
+          "reg": "r5"
+        }
+      ]
+    },
+    {
+      "addr": "0x27b4",
+      "name": "cc_reset_all",
+      "confidence": "high",
+      "source": "src/arm/event_ctl.c",
+      "plate": "CC121. Resets controllers of ALL 16 channels of the port (r6 = channel 0): vol/level 100, expr 127, isel 0x7F, pan 0xC0, q 0x40, EG ofs 0x20, flv_ofs 0x2000, cutoff/bend_range/bend/mod/lpoff/sustain/fx_send 0. Keeps program/bank, RPN state, drum_kit, cutoff_range. Then every sounding voice of the port loses VOICE_HELD; released ones are keyed off.",
+      "params": [
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r3"
+        },
+        {
+          "name": "port_chans",
+          "type": "MidiChannel *",
+          "reg": "r6"
+        }
+      ],
+      "locals": {
+        "pVVar1|pVVar2|pVVar3|pVVar4|pVVar5": "v",
+        "pAVar3|pAVar4|pAVar5|pAVar6": "ac"
+      }
+    },
+    {
+      "addr": "0x28c8",
+      "name": "ctl_reset_port",
+      "confidence": "medium",
+      "source": "src/arm/event_ctl.c",
+      "plate": "Unreferenced alternative entry of cc_reset_all: r6 = 0xC400 + (r0&7)*0x480, then b 0x27B4. Does not set r3, so the voice loop uses a stale port.",
+      "params": [
+        {
+          "name": "port",
+          "type": "uint",
+          "reg": "r0"
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "addr": "0x1878",
+      "name": "cc_branch_table",
+      "comment": "128 x 'b handler', indexed by CC number"
+    },
+    {
+      "addr": "0x2284",
+      "name": "cc74_scale_table",
+      "comment": "9 x 'b cc_cutoff_kN' indexed by cutoff_range (0..32 step 4): 7,0,1,2,3,4,5,6,7"
+    },
+    {
+      "addr": "0x13e8",
+      "name": "prog_saved_bank",
+      "type": "uint",
+      "comment": "ev_program_change scratch"
+    },
+    {
+      "addr": "0x14b0",
+      "name": "pb_bend_scratch",
+      "type": "int",
+      "comment": "ev_pitch_bend scratch: signed bend"
+    },
+    {
+      "addr": "0x13414",
+      "name": "midi_timing_counter",
+      "comment": "CC48; SH-4 sdDrvGetMidiTimmingCounter"
+    }
+  ],
+  "comments": [
+    {
+      "addr": "0x136c",
+      "kind": "eol",
+      "text": "r5 = &g_midi_ch[port*16+ch]"
+    },
+    {
+      "addr": "0x1374",
+      "kind": "eol",
+      "text": "save bank ptr (restored if program out of range)"
+    },
+    {
+      "addr": "0x137c",
+      "kind": "eol",
+      "text": "bank table 0x14080 + bank_no*8 {addr,size}"
+    },
+    {
+      "addr": "0x138c",
+      "kind": "eol",
+      "text": "not loaded -> built-in bank 0x3E48"
+    },
+    {
+      "addr": "0x139c",
+      "kind": "eol",
+      "text": "BankHeader.num_progs"
+    },
+    {
+      "addr": "0x13a8",
+      "kind": "eol",
+      "text": "program >= num_progs -> ignore"
+    },
+    {
+      "addr": "0x13ac",
+      "kind": "eol",
+      "text": "mc->program"
+    },
+    {
+      "addr": "0x13c8",
+      "kind": "eol",
+      "text": "mc->prog = bank + prog_tab[p]"
+    },
+    {
+      "addr": "0x13d4",
+      "kind": "eol",
+      "text": "mc->velcurve = bank + velcurve_tab"
+    },
+    {
+      "addr": "0x13f4",
+      "kind": "eol",
+      "text": "(data2<<7) & 0x3F80"
+    },
+    {
+      "addr": "0x1408",
+      "kind": "eol",
+      "text": "bend = (data2<<7|data1) - 0x2000"
+    },
+    {
+      "addr": "0x140c",
+      "kind": "eol",
+      "text": "mc->bend"
+    },
+    {
+      "addr": "0x1448",
+      "kind": "eol",
+      "text": "0xFFFF0000: negative bend?"
+    },
+    {
+      "addr": "0x1450",
+      "kind": "eol",
+      "text": "negative -> Voice.bend_down"
+    },
+    {
+      "addr": "0x1454",
+      "kind": "eol",
+      "text": "positive -> Voice.bend_up"
+    },
+    {
+      "addr": "0x145c",
+      "kind": "eol",
+      "text": "LSR of signed product; only low 16 bits kept (== ASR)"
+    },
+    {
+      "addr": "0x1468",
+      "kind": "eol",
+      "text": "Voice.bend_ofs"
+    },
+    {
+      "addr": "0x1478",
+      "kind": "eol",
+      "text": "PortState.pitch"
+    },
+    {
+      "addr": "0x147c",
+      "kind": "eol",
+      "text": "remove 0x8000 bias"
+    },
+    {
+      "addr": "0x148c",
+      "kind": "eol",
+      "text": "voice_set_pitch(r5 voice, r6 split, r7 pitch, r8 AICA ch)"
+    },
+    {
+      "addr": "0x1860",
+      "kind": "eol",
+      "text": "(ev>>6)&0x1FC = CC number * 4"
+    },
+    {
+      "addr": "0x1868",
+      "kind": "eol",
+      "text": "r1 = controller value"
+    },
+    {
+      "addr": "0x1a8c",
+      "kind": "eol",
+      "text": "mc->mod"
+    },
+    {
+      "addr": "0x1a94",
+      "kind": "eol",
+      "text": "NB: no voice-active test in this loop"
+    },
+    {
+      "addr": "0x1ab0",
+      "kind": "eol",
+      "text": "ToneSplit.lfo (hi half of +0x0C)"
+    },
+    {
+      "addr": "0x1acc",
+      "kind": "eol",
+      "text": "PLFOS' = ((PLFOS+1)*(v+1)-1)>>7, in bits 7:5"
+    },
+    {
+      "addr": "0x1ae4",
+      "kind": "eol",
+      "text": "ALFOS' = ((ALFOS+1)*(v+1)-1)>>7"
+    },
+    {
+      "addr": "0x1afc",
+      "kind": "eol",
+      "text": "clear LFORE"
+    },
+    {
+      "addr": "0x1b24",
+      "kind": "eol",
+      "text": "value | 0x80"
+    },
+    {
+      "addr": "0x1b2c",
+      "kind": "eol",
+      "text": "NRPN selected?"
+    },
+    {
+      "addr": "0x1b38",
+      "kind": "eol",
+      "text": "RPN selected?"
+    },
+    {
+      "addr": "0x1b48",
+      "kind": "eol",
+      "text": "+0x20 rpn_ref_msb: never written (always 0)"
+    },
+    {
+      "addr": "0x1b70",
+      "kind": "eol",
+      "text": "RPN null 7F/7F: deselect"
+    },
+    {
+      "addr": "0x1b88",
+      "kind": "eol",
+      "text": "bend_range = v|0x80 (RPN 0)"
+    },
+    {
+      "addr": "0x1ba0",
+      "kind": "eol",
+      "text": "built-in curve at 0x3F28"
+    },
+    {
+      "addr": "0x1bbc",
+      "kind": "eol",
+      "text": "level = (c[a]+1)*(c[b]+1)-1 >> 7"
+    },
+    {
+      "addr": "0x1bd4",
+      "kind": "eol",
+      "text": "PortState.volume (0x80 = 0)"
+    },
+    {
+      "addr": "0x1c0c",
+      "kind": "eol",
+      "text": "Voice.vel_curve"
+    },
+    {
+      "addr": "0x1c20",
+      "kind": "eol",
+      "text": "velcurve[Voice.velocity]"
+    },
+    {
+      "addr": "0x1c38",
+      "kind": "eol",
+      "text": "ToneSplit.tl"
+    },
+    {
+      "addr": "0x1c4c",
+      "kind": "eol",
+      "text": ">> 14"
+    },
+    {
+      "addr": "0x1c54",
+      "kind": "eol",
+      "text": "Voice.vol"
+    },
+    {
+      "addr": "0x1c6c",
+      "kind": "eol",
+      "text": "TL = 255 - clamp(vol + port volume)"
+    },
+    {
+      "addr": "0x1c80",
+      "kind": "eol",
+      "text": "AICA TL (15:8), keep Q/LPOFF"
+    },
+    {
+      "addr": "0x1ca8",
+      "kind": "eol",
+      "text": "PortState.pan (0x80 = 0)"
+    },
+    {
+      "addr": "0x1cc8",
+      "kind": "eol",
+      "text": "MIDI pan -> DIPAN (bit4 = left)"
+    },
+    {
+      "addr": "0x1d0c",
+      "kind": "eol",
+      "text": "byte write DIPAN"
+    },
+    {
+      "addr": "0x1d28",
+      "kind": "eol",
+      "text": "dead store"
+    },
+    {
+      "addr": "0x1d30",
+      "kind": "eol",
+      "text": "-> ctl_apply_volume (inside cc_volume)"
+    },
+    {
+      "addr": "0x1d40",
+      "kind": "eol",
+      "text": "flv_ofs = MSB<<7 | LSB"
+    },
+    {
+      "addr": "0x1d5c",
+      "kind": "eol",
+      "text": "lpoff = 0x7F: filter on"
+    },
+    {
+      "addr": "0x1e1c",
+      "kind": "eol",
+      "text": "ToneSplit.flv[3]"
+    },
+    {
+      "addr": "0x1e24",
+      "kind": "eol",
+      "text": "flv_ofs[3] (u16 at +0x2E)"
+    },
+    {
+      "addr": "0x1e40",
+      "kind": "eol",
+      "text": "+ mc->cutoff"
+    },
+    {
+      "addr": "0x1e58",
+      "kind": "eol",
+      "text": "f+8 bits 15:13 -> clamp 0x1FF8"
+    },
+    {
+      "addr": "0x1e64",
+      "kind": "eol",
+      "text": "AICA FLV3"
+    },
+    {
+      "addr": "0x2064",
+      "kind": "eol",
+      "text": "ToneSplit.flv[3]"
+    },
+    {
+      "addr": "0x2068",
+      "kind": "eol",
+      "text": "flv_ofs[3] (u16 at +0x2E)"
+    },
+    {
+      "addr": "0x20ac",
+      "kind": "eol",
+      "text": "AICA FLV3"
+    },
+    {
+      "addr": "0x1f18",
+      "kind": "eol",
+      "text": "drum channel? (drum_kit bit0, set by host cmd)"
+    },
+    {
+      "addr": "0x1f24",
+      "kind": "eol",
+      "text": "bank table 0x14080 + v*8 {addr,size}"
+    },
+    {
+      "addr": "0x1f58",
+      "kind": "eol",
+      "text": "drv_err_flags |= 1 (bank not loaded)"
+    },
+    {
+      "addr": "0x1f60",
+      "kind": "eol",
+      "text": "drum kit 0/1 only"
+    },
+    {
+      "addr": "0x1f68",
+      "kind": "eol",
+      "text": "kits = bank entries 66/67"
+    },
+    {
+      "addr": "0x1f98",
+      "kind": "eol",
+      "text": "built-in drum kit"
+    },
+    {
+      "addr": "0x1fb4",
+      "kind": "eol",
+      "text": "0x13414 = 0 or +1"
+    },
+    {
+      "addr": "0x1fc0",
+      "kind": "eol",
+      "text": "keep bit7 (bit0 of the MSB)"
+    },
+    {
+      "addr": "0x20f0",
+      "kind": "eol",
+      "text": "mc->sustain = v & 0x40"
+    },
+    {
+      "addr": "0x2130",
+      "kind": "eol",
+      "text": "clear VOICE_HELD"
+    },
+    {
+      "addr": "0x2138",
+      "kind": "eol",
+      "text": "still keyed -> keep sounding"
+    },
+    {
+      "addr": "0x214c",
+      "kind": "eol",
+      "text": "&0x3FF: clears KYONB and SSCTL"
+    },
+    {
+      "addr": "0x2150",
+      "kind": "eol",
+      "text": "KYONEX (key off)"
+    },
+    {
+      "addr": "0x21ac",
+      "kind": "eol",
+      "text": "set VOICE_HELD (also on released voices)"
+    },
+    {
+      "addr": "0x21cc",
+      "kind": "eol",
+      "text": "lpoff: 0 tone, <64 off, >=64 on"
+    },
+    {
+      "addr": "0x2214",
+      "kind": "eol",
+      "text": "ToneSplit.q"
+    },
+    {
+      "addr": "0x221c",
+      "kind": "eol",
+      "text": "keep LPOFF"
+    },
+    {
+      "addr": "0x2238",
+      "kind": "eol",
+      "text": "byte write Q|LPOFF (VOFF cleared)"
+    },
+    {
+      "addr": "0x2280",
+      "kind": "eol",
+      "text": "into cc74_scale_table + cutoff_range"
+    },
+    {
+      "addr": "0x22d4",
+      "kind": "eol",
+      "text": "cutoff_range = min(v,8)*4"
+    },
+    {
+      "addr": "0x23c4",
+      "kind": "eol",
+      "text": "ToneSplit.flv[3]"
+    },
+    {
+      "addr": "0x23c8",
+      "kind": "eol",
+      "text": "flv_ofs[3] (u16 at +0x2E)"
+    },
+    {
+      "addr": "0x23e8",
+      "kind": "eol",
+      "text": "+ mc->cutoff"
+    },
+    {
+      "addr": "0x240c",
+      "kind": "eol",
+      "text": "AICA FLV3"
+    },
+    {
+      "addr": "0x2458",
+      "kind": "eol",
+      "text": "v >= 16 -> 0x7F (use tone ISEL)"
+    },
+    {
+      "addr": "0x2474",
+      "kind": "eol",
+      "text": "port 7 only"
+    },
+    {
+      "addr": "0x2498",
+      "kind": "eol",
+      "text": "EFPAN of DSP output slot ch"
+    },
+    {
+      "addr": "0x24ac",
+      "kind": "eol",
+      "text": "port 7 only"
+    },
+    {
+      "addr": "0x24c4",
+      "kind": "eol",
+      "text": "EFSDL of DSP output slot ch"
+    },
+    {
+      "addr": "0x24d8",
+      "kind": "eol",
+      "text": "port 7 only"
+    },
+    {
+      "addr": "0x24ec",
+      "kind": "eol",
+      "text": "fx_prg_select(v-1)"
+    },
+    {
+      "addr": "0x24fc",
+      "kind": "eol",
+      "text": "fx_prg_clear()"
+    },
+    {
+      "addr": "0x2514",
+      "kind": "eol",
+      "text": "effect's variable-coef slot layout (bits 5:4)"
+    },
+    {
+      "addr": "0x2538",
+      "kind": "eol",
+      "text": "pan preset (v>>2)*16 bytes"
+    },
+    {
+      "addr": "0x2540",
+      "kind": "eol",
+      "text": "first variable COEF index"
+    },
+    {
+      "addr": "0x2554",
+      "kind": "eol",
+      "text": "COEF[base+slot+k*stride]"
+    },
+    {
+      "addr": "0x2588",
+      "kind": "eol",
+      "text": "mc->fx_send = 2v"
+    },
+    {
+      "addr": "0x259c",
+      "kind": "eol",
+      "text": "PortState.fx_send"
+    },
+    {
+      "addr": "0x2604",
+      "kind": "eol",
+      "text": "byte write IMXL | tone ISEL"
+    },
+    {
+      "addr": "0x2620",
+      "kind": "eol",
+      "text": "v == 0: fx_send = 0"
+    },
+    {
+      "addr": "0x2698",
+      "kind": "eol",
+      "text": "BUG: and #0 -> IMXL 0 (probably meant #0xF)"
+    },
+    {
+      "addr": "0x26d8",
+      "kind": "eol",
+      "text": "adds on a byte never carries: 0xFF wraps to 0"
+    },
+    {
+      "addr": "0x26e4",
+      "kind": "eol",
+      "text": "no S: movcs uses stale C from midi_event_pop cmp (set unless ring wrapped) -> 0xFF outright"
+    },
+    {
+      "addr": "0x2720",
+      "kind": "eol",
+      "text": "BUG: r1 still holds nrpn_data (+0x24)"
+    },
+    {
+      "addr": "0x2734",
+      "kind": "eol",
+      "text": "param_lsb"
+    },
+    {
+      "addr": "0x2754",
+      "kind": "eol",
+      "text": "param_msb"
+    },
+    {
+      "addr": "0x2774",
+      "kind": "eol",
+      "text": "param_lsb"
+    },
+    {
+      "addr": "0x2794",
+      "kind": "eol",
+      "text": "param_msb"
+    },
+    {
+      "addr": "0x27b4",
+      "kind": "eol",
+      "text": "16 channels of the port (r6 = channel 0)"
+    },
+    {
+      "addr": "0x2874",
+      "kind": "eol",
+      "text": "any channel of the port"
+    },
+    {
+      "addr": "0x28a8",
+      "kind": "eol",
+      "text": "clear KYONB"
+    },
+    {
+      "addr": "0x28ac",
+      "kind": "eol",
+      "text": "KYONEX (key off)"
+    },
+    {
+      "addr": "0x28d8",
+      "kind": "eol",
+      "text": "r3 (port) not set"
+    },
+    {
+      "addr": "0x2284",
+      "kind": "pre",
+      "text": "Branch table for CC74, entered with 'mov pc, 0x2284 + cutoff_range'. Entries: range 0 -> k7, 4 -> k0, 8 -> k1 ... 28 -> k6, 32 -> k7. Followed by nop padding."
+    },
+    {
+      "addr": "0x2688",
+      "kind": "eol",
+      "text": "carry-based clamp (sic); result discarded by and #0 below"
+    },
+    {
+      "addr": "0x263c",
+      "kind": "eol",
+      "text": "-0x20 (the v!=0 path uses -0x10)"
+    }
+  ]
+}

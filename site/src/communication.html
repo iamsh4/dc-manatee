@@ -1,0 +1,273 @@
+<!-- title: SH-4 ↔ ARM: interrupts & mailboxes -->
+<div class="eyebrow">The hardware · and how Manatee uses it</div>
+<h1>SH-4 ↔ ARM: interrupts &amp; mailboxes</h1>
+<p class="lead">The two processors can talk in two ways: by raising interrupts in each other through the
+AICA's interrupt controller, or by reading and writing shared sound RAM. The hardware supports both.
+Manatee uses interrupts only for its own clock and for MIDI input, and talks to the game entirely
+through a polled mailbox.</p>
+
+<h2 id="interrupt-hardware">The interrupt hardware</h2>
+<p>The AICA's interrupt controller has a set of <strong>sources</strong>: external pins, MIDI input, MIDI
+output, the DMA engine, the three timers, a once-per-sample tick, and one special source meaning "the other
+CPU wants your attention". For each target CPU every source has three bits: <strong>enable</strong> (may this
+source interrupt me?), <strong>pending</strong> (has it fired?), and <strong>reset</strong> (acknowledge it).</p>
+
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 400" role="img" aria-label="AICA interrupt routing to the ARM and the SH-4">
+    <defs>
+      <marker id="i1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <!-- sources -->
+    <text x="20" y="28" font-weight="700" font-size="14">Sources</text>
+    <g font-size="12.5">
+      <g data-tip="Timer A|Used by Manatee: fires every 44 samples. The driver's heartbeat.">
+        <rect class="arm" x="20" y="42" width="150" height="30" rx="6"/><text x="32" y="62">Timer A  ✓ used</text></g>
+      <g data-tip="Timers B and C|Available, unused by Manatee.">
+        <rect class="box" x="20" y="78" width="150" height="30" rx="6"/><text x="32" y="98" class="t-sec">Timers B, C</text></g>
+      <g data-tip="MIDI in|Used by Manatee: a byte arrived on the AICA's MIDI input.">
+        <rect class="arm" x="20" y="114" width="150" height="30" rx="6"/><text x="32" y="134">MIDI in  ✓ used</text></g>
+      <g data-tip="DMA end|Given a priority level by Manatee but never enabled.">
+        <rect class="box" x="20" y="150" width="150" height="30" rx="6"/><text x="32" y="170" class="t-sec">DMA end</text></g>
+      <g data-tip="CPU doorbell|Set by the other processor writing the pending register. Lets SH-4 and ARM interrupt each other. Manatee uses it in neither direction.">
+        <rect class="box" x="20" y="186" width="150" height="30" rx="6"/><text x="32" y="206" class="t-sec">"other CPU" bell</text></g>
+      <g data-tip="Other sources|External pins, MIDI out, per-sample tick.">
+        <rect class="box" x="20" y="222" width="150" height="30" rx="6"/><text x="32" y="242" class="t-sec">MIDI out, sample, ext</text></g>
+    </g>
+    <!-- ARM path -->
+    <g data-tip="ARM enable / pending / reset|Per source: may it interrupt the ARM, has it fired, acknowledge.">
+      <rect class="box" x="230" y="42" width="150" height="120" rx="8"/>
+      <text x="244" y="66" font-weight="700" font-size="13.5">ARM side</text>
+      <text x="244" y="88" class="t-sec" font-size="12">enable mask</text>
+      <text x="244" y="106" class="t-sec" font-size="12">pending bits</text>
+      <text x="244" y="124" class="t-sec" font-size="12">reset (ack)</text>
+      <text x="244" y="146" class="t-muted" font-size="11.5">level 0-7 per source</text></g>
+    <g data-tip="FIQ + INTREQ|The highest-priority pending source raises the ARM's FIQ line; a register reports its level so the handler can dispatch without polling each source.">
+      <rect class="arm" x="440" y="62" width="160" height="80" rx="8"/>
+      <text x="454" y="90" font-weight="700" font-size="14">FIQ line</text>
+      <text x="454" y="110" class="t-sec" font-size="12">+ current level</text>
+      <text x="454" y="128" class="t-muted" font-size="11.5">"INTREQ"</text></g>
+    <g data-tip="ARM7DI|Enters FIQ mode at vector 0x1C with banked registers r8-r14.">
+      <rect class="arm" x="660" y="62" width="180" height="80" rx="8"/>
+      <text x="674" y="90" font-weight="700" font-size="14">ARM7DI</text>
+      <text x="674" y="110" class="t-sec" font-size="12">FIQ vector 0x1C</text>
+      <text x="674" y="128" class="t-muted" font-size="11.5">Manatee's handler</text></g>
+    <path class="wire" d="M170 57 H200 V100 H230" marker-end="url(#i1)"/>
+    <path class="wire" d="M170 129 H200 V100"/>
+    <path class="wire" d="M380 102 H440" marker-end="url(#i1)"/>
+    <path class="wire" d="M600 102 H660" marker-end="url(#i1)"/>
+    <!-- SH-4 path -->
+    <g data-tip="SH-4 enable / pending / reset|The parallel set of bits for the main CPU.">
+      <rect class="box" x="230" y="230" width="150" height="100" rx="8"/>
+      <text x="244" y="254" font-weight="700" font-size="13.5">SH-4 side</text>
+      <text x="244" y="276" class="t-sec" font-size="12">enable mask</text>
+      <text x="244" y="294" class="t-sec" font-size="12">pending bits</text>
+      <text x="244" y="312" class="t-sec" font-size="12">reset (ack)</text></g>
+    <g data-tip="Holly|Holly's interrupt controller turns the AICA's line into an SH-4 interrupt.">
+      <rect class="box" x="440" y="250" width="160" height="60" rx="8"/>
+      <text x="454" y="276" font-weight="700" font-size="14">Holly</text>
+      <text x="454" y="296" class="t-sec" font-size="12">interrupt controller</text></g>
+    <g data-tip="SH-4|Sega's sd library does not install an AICA interrupt handler in this game; it polls.">
+      <rect class="host" x="660" y="250" width="180" height="60" rx="8"/>
+      <text x="674" y="276" font-weight="700" font-size="14">SH-4</text>
+      <text x="674" y="296" class="t-sec" font-size="12">IRQ (unused by sd lib)</text></g>
+    <path class="wire" d="M170 201 H200 V280 H230" marker-end="url(#i1)"/>
+    <path class="wire" d="M380 280 H440" marker-end="url(#i1)"/>
+    <path class="wire" d="M600 280 H660" marker-end="url(#i1)"/>
+    <!-- doorbells -->
+    <path class="wire dash" d="M690 250 V200 H320 V164" marker-end="url(#i1)" style="stroke:var(--c-host)"/>
+    <text x="420" y="194" font-size="11.5" class="t-muted">doorbell: SH-4 sets the ARM's "other CPU" bit → FIQ</text>
+    <path class="wire dash" d="M800 142 V222 H330 V228" style="stroke:var(--c-arm)" marker-end="url(#i1)"/>
+    <text x="420" y="240" font-size="11.5" class="t-muted">doorbell: ARM sets the SH-4's bit → IRQ</text>
+    <text x="220" y="376" font-size="12" class="t-muted">Dashed: the "doorbell" paths. Both exist in hardware; Manatee and the sd library use neither.</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 1.</b> One interrupt controller, two customers. Orange sources are the only ones
+  Manatee enables. Hover elements for details.</figcaption>
+</figure>
+
+<h3>Levels and FIQ</h3>
+<p>On the ARM side each source is given a <strong>priority level</strong> from 0 to 7 by three bit-plane
+registers. When any enabled source is pending, the AICA asserts the ARM's <strong>FIQ</strong> and reports the
+level of the winning source in a status register. The ARM's normal IRQ input is never used by the AICA, so
+FIQ is the only interrupt the sound CPU ever sees.</p>
+<div class="grid three">
+  <div class="card tile"><div class="val">level 2</div><div class="lbl">Timer A → driver heartbeat</div></div>
+  <div class="card tile"><div class="val">level 5</div><div class="lbl">MIDI in → MIDI parser</div></div>
+  <div class="card tile"><div class="val">level 3</div><div class="lbl">DMA end (assigned, never enabled)</div></div>
+</div>
+
+<h2 id="fiq-handler">Anatomy of Manatee's FIQ handler</h2>
+<ol class="steps">
+  <li><strong>Entry</strong>The CPU switches to FIQ mode: it gets private copies of registers r8-r14, saves the
+  interrupted status, and jumps to the vector at address <code>0x1C</code>, which branches to the handler.</li>
+  <li><strong>Own stack</strong>The handler points its stack at a 96-byte area <em>inside the driver image
+  itself</em> and saves its return address there. Everything it needs fits in the banked registers, so
+  timer interrupts save nothing else.</li>
+  <li><strong>Dispatch by level</strong>It reads the level register and jumps through an 8-entry table.
+  Only level 2 (timer) and level 5 (MIDI) do anything; any other level is treated as spurious.</li>
+  <li><strong>Timer path</strong>Reload Timer A, acknowledge it, raise the 1 ms flag, and every fourth
+  (corrected, see below) tick raise the 4 ms flag and bump the "execute counter" the SH-4 can read.</li>
+  <li><strong>MIDI path</strong>Save r0-r7 (the parser is ordinary code), then drain the MIDI FIFO through a
+  running-status parser and push complete messages into the driver's event ring as "port 7".</li>
+  <li><strong>Exit</strong>Write the interrupt-clear register four times (the chip needs repeated writes to
+  reliably drop the line) and return, restoring the interrupted mode.</li>
+</ol>
+<div class="callout driver">
+  <div class="title">Design principle: the interrupt only raises flags</div>
+  <p>All real work happens in the main loop. The timer interrupt only sets two bytes; the main loop sees them
+  and runs the 1 ms or 4 ms work. This keeps the interrupt short and means almost no data is shared between
+  interrupt and main code. The one exception is the MIDI input path, which appends to the same event ring the
+  main loop's producers use, without locking; harmless on a retail console, where nothing is plugged into
+  the MIDI port.</p>
+</div>
+
+<h2 id="heartbeat">The heartbeat: an exact 4 ms clock</h2>
+<p>Timer A counts output samples at 44.1 kHz. Manatee reloads it so that it overflows every
+<strong>44 samples</strong>: 0.9977 ms, slightly shorter than a millisecond. Musical timing is built on a
+4 ms tick, so the error would accumulate. The fix is neat: <strong>one interrupt in every 441 is not
+counted</strong> towards the 4 ms clock.</p>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 190" role="img" aria-label="Timer A tick counting">
+    <text x="20" y="28" font-size="13" font-weight="650">Timer A interrupts (every 44 samples)</text>
+    <g>
+      <!-- 24 ticks -->
+      <g class="tk"></g>
+    </g>
+    <g stroke-width="2">
+      <line x1="40" y1="50" x2="40" y2="80" class="s-aica" stroke="var(--c-aica)"/>
+      <line x1="72" y1="50" x2="72" y2="80" stroke="var(--c-aica)"/>
+      <line x1="104" y1="50" x2="104" y2="80" stroke="var(--c-aica)"/>
+      <line x1="136" y1="50" x2="136" y2="80" stroke="var(--c-aica)"/>
+      <line x1="168" y1="50" x2="168" y2="80" stroke="var(--c-aica)"/>
+      <line x1="200" y1="50" x2="200" y2="80" stroke="var(--c-aica)"/>
+      <line x1="232" y1="50" x2="232" y2="80" stroke="var(--c-aica)"/>
+      <line x1="264" y1="50" x2="264" y2="80" stroke="var(--c-aica)"/>
+      <line x1="296" y1="50" x2="296" y2="80" stroke="var(--c-aica)"/>
+      <line x1="328" y1="50" x2="328" y2="80" stroke="var(--c-aica)"/>
+      <line x1="360" y1="50" x2="360" y2="80" stroke="var(--c-aica)"/>
+      <line x1="392" y1="50" x2="392" y2="80" stroke="var(--c-aica)"/>
+      <line x1="520" y1="50" x2="520" y2="80" stroke="var(--c-aica)"/>
+      <line x1="552" y1="50" x2="552" y2="80" stroke="var(--critical)"/>
+      <line x1="584" y1="50" x2="584" y2="80" stroke="var(--c-aica)"/>
+      <line x1="616" y1="50" x2="616" y2="80" stroke="var(--c-aica)"/>
+      <line x1="648" y1="50" x2="648" y2="80" stroke="var(--c-aica)"/>
+      <line x1="680" y1="50" x2="680" y2="80" stroke="var(--c-aica)"/>
+    </g>
+    <text x="420" y="70" class="t-muted" font-size="16">· · ·</text>
+    <text x="520" y="100" font-size="11.5" style="fill:var(--critical)">441st: not counted</text>
+    <text x="20" y="128" font-size="13" font-weight="650">4 ms ticks (every 4th counted interrupt)</text>
+    <g fill="var(--c-arm)">
+      <rect x="132" y="140" width="8" height="26" rx="2" style="fill:var(--c-arm)"/>
+      <rect x="260" y="140" width="8" height="26" rx="2" style="fill:var(--c-arm)"/>
+      <rect x="388" y="140" width="8" height="26" rx="2" style="fill:var(--c-arm)"/>
+      <rect x="580" y="140" width="8" height="26" rx="2" style="fill:var(--c-arm)"/>
+    </g>
+    <text x="640" y="150" class="t-sec" font-size="12.5">440 counted ticks = 441 × 44 samples</text>
+    <text x="640" y="170" class="t-sec" font-size="12.5">= 0.44 s exactly</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 2.</b> The "1 ms" flag fires on every interrupt (about 1.0023 kHz); the 4 ms tick that
+  drives all musical timing skips one interrupt in 441 and is exact.</figcaption>
+</figure>
+
+<h2 id="mailbox">The mailbox: how the game talks to the driver</h2>
+<p>Although the hardware offers a doorbell interrupt, Sega's library and Manatee communicate purely through
+<strong>shared sound RAM</strong>, polled from both sides. There are four channels:</p>
+<div class="grid two">
+  <div class="card"><span class="chip host"><i></i>SH-4 → ARM</span><h4 style="margin:10px 0 4px">Commands</h4>
+  <p>32 slots of 16 bytes plus a "batch pending" flag byte. Play, stop, volume, pitch, fades, effects…</p></div>
+  <div class="card"><span class="chip host"><i></i>SH-4 → ARM</span><h4 style="margin:10px 0 4px">Bank table</h4>
+  <p>Address and size of every downloaded bank. Writing an entry <em>is</em> the download notification.</p></div>
+  <div class="card"><span class="chip arm"><i></i>ARM → SH-4</span><h4 style="margin:10px 0 4px">Status records</h4>
+  <p>32 bytes per port: playing/paused/fading flags, volume, pan, pitch, speed, position, errors.
+  Rewritten every 4 ms.</p></div>
+  <div class="card"><span class="chip arm"><i></i>ARM → SH-4</span><h4 style="margin:10px 0 4px">System block</h4>
+  <p>The execute counter, the MIDI timing counter, the driver error word, the current effect program.</p></div>
+</div>
+
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 470" role="img" aria-label="Sequence diagram of one command batch">
+    <defs>
+      <marker id="i2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <rect class="host" x="40" y="14" width="200" height="44" rx="8"/>
+    <text x="58" y="42" font-weight="700" font-size="14">Game + sd library (SH-4)</text>
+    <rect class="mem" x="330" y="14" width="200" height="44" rx="8"/>
+    <text x="360" y="42" font-weight="700" font-size="14">Sound RAM mailbox</text>
+    <rect class="arm" x="620" y="14" width="200" height="44" rx="8"/>
+    <text x="650" y="42" font-weight="700" font-size="14">Manatee (ARM)</text>
+    <line class="grid-line dash" x1="140" y1="58" x2="140" y2="460"/>
+    <line class="grid-line dash" x1="430" y1="58" x2="430" y2="460"/>
+    <line class="grid-line dash" x1="720" y1="58" x2="720" y2="460"/>
+
+    <rect class="box-soft" x="60" y="80" width="160" height="40" rx="6"/>
+    <text x="72" y="98" font-size="12">sdShotPlay(port, bank, n)</text>
+    <text x="72" y="113" font-size="11" class="t-muted">→ 16-byte record queued</text>
+
+    <rect class="box-soft" x="60" y="136" width="160" height="40" rx="6"/>
+    <text x="72" y="154" font-size="12">once per frame:</text>
+    <text x="72" y="169" font-size="11" class="t-muted">sdSysServer()</text>
+
+    <path class="wire" d="M140 190 H428" marker-end="url(#i2)"/>
+    <text x="150" y="184" font-size="12" class="t-sec">1. flag clear? copy ≤ 32 commands (DMA)</text>
+    <path class="wire" d="M140 222 H428" marker-end="url(#i2)"/>
+    <text x="150" y="216" font-size="12" class="t-sec">2. set "batch pending" = 1</text>
+
+    <rect class="box-soft" x="640" y="240" width="160" height="40" rx="6"/>
+    <text x="652" y="258" font-size="12">4 ms tick</text>
+    <text x="652" y="273" font-size="11" class="t-muted">flag set?</text>
+    <path class="wire" d="M432 300 H718" marker-end="url(#i2)" marker-start="url(#i2)"/>
+    <text x="450" y="294" font-size="12" class="t-sec">3. execute every non-empty slot</text>
+    <path class="wire" d="M718 330 H432" marker-end="url(#i2)"/>
+    <text x="450" y="324" font-size="12" class="t-sec">4. log it, clear slots, clear flag</text>
+    <path class="wire" d="M718 368 H432" marker-end="url(#i2)"/>
+    <text x="450" y="362" font-size="12" class="t-sec">5. every 4 ms: write status records</text>
+    <path class="wire" d="M428 410 H140" marker-end="url(#i2)"/>
+    <text x="150" y="404" font-size="12" class="t-sec">6. sdShotGetStat() reads status</text>
+    <text x="40" y="452" font-size="11.5" class="t-muted">The flag is the back-pressure: the SH-4 will not send a new batch until the ARM has cleared it.</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 3.</b> One command batch, end to end. Worst-case latency from the API call to sound is
+  roughly one video frame plus one 4 ms tick.</figcaption>
+</figure>
+
+<h3>Details worth knowing</h3>
+<ul>
+  <li><strong>Batches, not a stream.</strong> The library keeps a 256-entry queue on the SH-4 side and
+  moves up to 32 commands per frame. The driver always scans all 32 slots and runs every non-empty one in
+  slot order; there is no count field.</li>
+  <li><strong>The pending flag is the handshake.</strong> The SH-4 sets it; only the ARM clears it. If the
+  ARM has not yet consumed a batch, the SH-4 reports "driver busy" and tries again next frame.</li>
+  <li><strong>Command codes are regular.</strong> The high nibble picks the family (MIDI ports, one-shot
+  ports, stream ports, CD audio, global) and the low nibble the operation (play, stop, pause, continue,
+  volume, pan, speed, pitch, effect send, direct level, reset…), so the same operation has the same low
+  nibble in every family.</li>
+  <li><strong>Fades are driver-side.</strong> A volume command carries a target and a fade time; the driver
+  converts that into a step and an interval and runs the fade on its 4 ms tick.</li>
+  <li><strong>A debug log.</strong> Every executed command is copied into a 128-entry history ring in sound
+  RAM, together with the number of ticks since the previous one. Nothing on the SH-4 reads it; it was
+  presumably for Sega's tools.</li>
+</ul>
+
+<h2 id="boot">Boot handshake</h2>
+<ol class="steps">
+  <li><strong>Hold the ARM</strong>The SH-4 asserts the ARM's reset.</li>
+  <li><strong>Prepare sound RAM</strong>It fills all 2 MB with the word "SEGA" and copies the driver image
+  (vectors, code, built-in data) to address 0.</li>
+  <li><strong>Release</strong>It releases reset and simply waits a fixed time; there is no explicit
+  acknowledgement. It then reads the driver's version bytes and its table of work-area addresses.</li>
+  <li><strong>Driver start-up</strong>The ARM writes 0xFF to its status word, silences all 64 channels, clears
+  its work RAM, installs its built-in banks, starts Timer A, writes "SEGA" to the status word and enables FIQ.</li>
+</ol>
+<div class="callout note">
+  <div class="title">Downloads need no command</div>
+  <p>To give the driver a bank, the SH-4 copies it into free sound RAM (by DMA or CPU) and writes its
+  address and size into the bank table. The driver only looks at the table when a command uses that bank, and
+  validates the bank then (tag, version and end marker). The SH-4 is entirely responsible for sound-RAM
+  allocation above the driver's own work area.</p>
+</div>

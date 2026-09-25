@@ -1,0 +1,860 @@
+{
+ "functions": [
+  {
+   "addr": "0x4948",
+   "name": "host_cmd_poll",
+   "signature": "void host_cmd_poll(void)",
+   "confidence": "high",
+   "source": "src/arm/host.c",
+   "plate": "Called from the main loop when host_cmd_pending (0x13400) is set. Scans all 32 slots at 0x13200 (r10 = slot, r11 = count): a nonzero code byte runs host_cmd_exec(r0 = code, r10 = slot). For EVERY slot the low byte of r0 is stored to byte 1 of the log entry cmd_log_cur (0x4994) and the slot's code byte is cleared; then host_cmd_pending = 0.\nQuirk: empty slots store r0 = 0, so in any batch of < 32 commands the last command's logged result is overwritten with 0.",
+   "locals": {
+    "@r0:0x495c": "code",
+    "@r11:0x494c": "n",
+    "@HASH:ffbf54d5b8:0x495c": "res"
+   }
+  },
+  {
+   "addr": "0x4998",
+   "name": "host_cmd_exec",
+   "signature": "uint host_cmd_exec(uint code, HostCmd *cmd)",
+   "confidence": "high",
+   "source": "src/arm/host.c",
+   "params": [
+    {
+     "name": "code",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "cmd",
+     "type": "HostCmd *",
+     "reg": "r10"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@r4:0x512c": "ps",
+    "@r6:0x5130": "sp",
+    "@r12:0x4bb8": "smsb",
+    "@HASH:7ff2953d807:0x5810": "err",
+    "@r0:0x5910": "b",
+    "@r0:0x5794": "val",
+    "@r0:0x57dc": {
+     "name": "step",
+     "type": "uint"
+    },
+    "@r0:0x5908": "n",
+    "@r0:0x5b14": "fx_out",
+    "@r1:0x5158": "v",
+    "@r1:0x5798": "tmp",
+    "@r1:0x57a4": "fade",
+    "@r1:0x5ca8": "fx_bank",
+    "@r1:0x5fec": "dsp_out",
+    "@r3:0x4de0": "status",
+    "@r3:0x5160": "ac",
+    "@r3:0x5208": "bank",
+    "@r5:0x5b10": "out_prm",
+    "@r5:0x5b1c": "out_prm_pan",
+    "@r7:0x49e0": "port",
+    "@r8:0x5a3c": "out_reg",
+    "@HASH:27ffc145716:0x5b14": "pan_p",
+    "@r2:0x5d0c": "fx_prg",
+    "@r0:0x5f88": "p8",
+    "@r0:0x572c": {
+     "name": "step16",
+     "type": "uint"
+    },
+    "@r0:0x542c": {
+     "name": "step16s",
+     "type": "uint"
+    },
+    "@r0:0x538c": {
+     "name": "step16v",
+     "type": "uint"
+    }
+   },
+   "plate": "Logs the command (bytes 0..11 + ticks_since_cmd, then cleared) at 0x14800 + cmd_log_ofs, advances the offset by 16 mod 0x800 and writes a 0xFFFFFFFF end marker; then dispatches: 0x00-0x3F via hcmd_jt_00_3f (0x4A44), 0x80-0x8F via hcmd_jt_80_8f (0x4B44). 0x40-0x7F / 0x90-0xFF return r0 = code*4.\nResult (r0, low byte logged by host_cmd_poll) per case, see the case labels hcmd_NN_* (the 'callee r0' cases were traced: shot helpers leave port&7, stream helpers [2] (0x25/0x26: [2]&~0x10), stop_all = g_pcm_slot[15].kind, 0x1C bad mode = old err; 0x8F non-SEGA = first mismatching byte).\nImplemented: 01-08 0A-0C 0E 0F (MIDI), 11-1C 1E 1F (one-shot), 21 22 25-2B 2E 2F (PCM stream), 35 36 3E (GD-DA), 80-8A 8E 8F (global; 82-8F bodies in fx.c). Unused: 00 09 0D 10 1D 20 23 24 2C 2D 30-34 37-3D 3F 8B-8D."
+  },
+  {
+   "addr": "0x50b8",
+   "name": "port_reset_prm",
+   "signature": "uint port_reset_prm(PortState *ps, SeqPlayer *sp)",
+   "confidence": "high",
+   "source": "src/arm/host.c",
+   "params": [
+    {
+     "name": "ps",
+     "type": "PortState *",
+     "reg": "r4"
+    },
+    {
+     "name": "sp",
+     "type": "SeqPlayer *",
+     "reg": "r6"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "plate": "Host 0x0E helper: resets one port's host parameters: vol/pan target+current 0x80, pitch/speed target+current 0x8000, all fade interval/count/step 0, direct_lvl/fx_send 0x80, SeqPlayer.tempo_scale = 0x4000. Returns 0. Dirty flags are not set. Entered by fall-through from hcmd_0e_midi_reset_prm (0x5094) and called per port from 0x512C."
+  }
+ ],
+ "labels": [
+  {
+   "addr": "0x4994",
+   "name": "cmd_log_cur",
+   "type": "pointer",
+   "comment": "scratch: log entry of the command being executed (host_cmd_poll stores the result at +1)"
+  },
+  {
+   "addr": "0x4A44",
+   "name": "hcmd_jt_00_3f",
+   "comment": "jump table: 64 x 'b case', host codes 0x00-0x3F (index code*4)"
+  },
+  {
+   "addr": "0x4B44",
+   "name": "hcmd_jt_80_8f",
+   "comment": "jump table: 16 x 'b case', host codes 0x80-0x8F (index (code*4)&0x1FF < 0x40)"
+  },
+  {
+   "addr": "0x4B84",
+   "name": "k_cmd_log_mask",
+   "type": "dword",
+   "comment": "0x7FF: command log ring = 128 x 16 bytes"
+  },
+  {
+   "addr": "0x4B88",
+   "name": "k_hcmd_jt2_mask",
+   "type": "dword",
+   "comment": "0x1FF: (code*4) & 0x1FF indexes the 0x80 table"
+  },
+  {
+   "addr": "0x4B8C",
+   "name": "p_host_cmd_slots",
+   "type": "pointer"
+  },
+  {
+   "addr": "0x4B90",
+   "name": "p_cmd_log_ofs",
+   "type": "pointer"
+  },
+  {
+   "addr": "0x4B94",
+   "name": "p_ticks_since_cmd",
+   "type": "pointer"
+  },
+  {
+   "addr": "0x4C4C",
+   "name": "hcmd_01_bank_error",
+   "comment": "bad SMSB bank: status |= 0x80, err_hi |= r1"
+  },
+  {
+   "addr": "0x4C78",
+   "name": "k_smsb_magic",
+   "type": "dword"
+  },
+  {
+   "addr": "0x4C7C",
+   "name": "k_endb_magic_4c7c",
+   "type": "dword"
+  },
+  {
+   "addr": "0x50B8",
+   "name": "port_reset_prm"
+  },
+  {
+   "addr": "0x512C",
+   "name": "hcmd_0e_all_ports",
+   "comment": "[2]==0xFF: port_reset_prm for ports 0..7"
+  },
+  {
+   "addr": "0x51F0",
+   "name": "p_seq_err",
+   "type": "pointer",
+   "comment": "&g_seq.err (0x10200)"
+  },
+  {
+   "addr": "0x52A4",
+   "name": "hcmd_11_bank_error",
+   "comment": "bad SOSB bank: player flags |= 0x80, g_shot_status[port].err_hi |= r1"
+  },
+  {
+   "addr": "0x52DC",
+   "name": "k_sosb_magic",
+   "type": "dword"
+  },
+  {
+   "addr": "0x52E0",
+   "name": "k_endb_magic_52e0",
+   "type": "dword"
+  },
+  {
+   "addr": "0x555C",
+   "name": "p_bank_table_sosb",
+   "type": "pointer"
+  },
+  {
+   "addr": "0x58CC",
+   "name": "p_pstm_status",
+   "type": "pointer"
+  },
+  {
+   "addr": "0x58D0",
+   "name": "p_pstm_player",
+   "type": "pointer"
+  },
+  {
+   "addr": "0x5958",
+   "name": "p_exts0_efsdl",
+   "type": "pointer",
+   "comment": "0x802041: high byte of DSP_OUT(16) (EXTS0 = CD left)"
+  },
+  {
+   "addr": "0x595C",
+   "name": "p_exts1_efsdl",
+   "type": "pointer",
+   "comment": "0x802045"
+  },
+  {
+   "addr": "0x5960",
+   "name": "p_dsp_out16",
+   "type": "pointer",
+   "comment": "0x802040 DSP_OUT(16)"
+  },
+  {
+   "addr": "0x5964",
+   "name": "p_dsp_out17",
+   "type": "pointer",
+   "comment": "0x802044 DSP_OUT(17)"
+  },
+  {
+   "addr": "0x13404",
+   "name": "mono_flag",
+   "type": "dword",
+   "comment": "0 stereo, 0xFFFFFFFF mono (host 0x8A); host 0x81 clamps MVOL to 13 when set"
+  },
+  {
+   "addr": "0x13410",
+   "name": "ticks_since_cmd",
+   "type": "dword",
+   "comment": "++ every 4 ms (0x6698); logged as word 3 of each command-log entry and cleared"
+  },
+  {
+   "addr": "0x4b98",
+   "name": "hcmd_unused"
+  },
+  {
+   "addr": "0x4b9c",
+   "name": "hcmd_01_midi_play"
+  },
+  {
+   "addr": "0x4c80",
+   "name": "hcmd_02_midi_stop"
+  },
+  {
+   "addr": "0x4d18",
+   "name": "hcmd_03_midi_pause"
+  },
+  {
+   "addr": "0x4da4",
+   "name": "hcmd_04_midi_continue"
+  },
+  {
+   "addr": "0x4df0",
+   "name": "hcmd_05_midi_set_vol"
+  },
+  {
+   "addr": "0x4e78",
+   "name": "hcmd_06_midi_set_pan"
+  },
+  {
+   "addr": "0x4f00",
+   "name": "hcmd_07_midi_set_speed"
+  },
+  {
+   "addr": "0x4fa0",
+   "name": "hcmd_08_midi_set_pitch"
+  },
+  {
+   "addr": "0x5038",
+   "name": "hcmd_0a_midi_set_fx_lev"
+  },
+  {
+   "addr": "0x505c",
+   "name": "hcmd_0b_midi_set_drct_lev"
+  },
+  {
+   "addr": "0x5080",
+   "name": "hcmd_0c_midi_break_loop"
+  },
+  {
+   "addr": "0x5094",
+   "name": "hcmd_0e_midi_reset_prm"
+  },
+  {
+   "addr": "0x5158",
+   "name": "hcmd_0f_midi_stop_all"
+  },
+  {
+   "addr": "0x51f4",
+   "name": "hcmd_11_shot_play"
+  },
+  {
+   "addr": "0x52e4",
+   "name": "hcmd_12_shot_stop"
+  },
+  {
+   "addr": "0x52f8",
+   "name": "hcmd_13_shot_pause"
+  },
+  {
+   "addr": "0x530c",
+   "name": "hcmd_14_shot_continue"
+  },
+  {
+   "addr": "0x5320",
+   "name": "hcmd_15_shot_set_vol"
+  },
+  {
+   "addr": "0x5348",
+   "name": "hcmd_16_shot_set_pan"
+  },
+  {
+   "addr": "0x5370",
+   "name": "hcmd_17_shot_set_speed"
+  },
+  {
+   "addr": "0x5410",
+   "name": "hcmd_18_shot_set_pitch"
+  },
+  {
+   "addr": "0x54b0",
+   "name": "hcmd_19_shot_set_fx_ch"
+  },
+  {
+   "addr": "0x54cc",
+   "name": "hcmd_1a_shot_set_fx_lev"
+  },
+  {
+   "addr": "0x54e8",
+   "name": "hcmd_1b_shot_set_drct_lev"
+  },
+  {
+   "addr": "0x5504",
+   "name": "hcmd_1c_shot_set_loop_mode"
+  },
+  {
+   "addr": "0x5520",
+   "name": "hcmd_1e_shot_reset_prm"
+  },
+  {
+   "addr": "0x554c",
+   "name": "hcmd_1f_shot_stop_all"
+  },
+  {
+   "addr": "0x5560",
+   "name": "hcmd_21_pstm_play"
+  },
+  {
+   "addr": "0x5638",
+   "name": "hcmd_22_pstm_stop"
+  },
+  {
+   "addr": "0x567c",
+   "name": "hcmd_25_pstm_set_vol"
+  },
+  {
+   "addr": "0x56b0",
+   "name": "hcmd_26_pstm_set_pan"
+  },
+  {
+   "addr": "0x56e4",
+   "name": "hcmd_27_pstm_set_speed"
+  },
+  {
+   "addr": "0x5794",
+   "name": "hcmd_28_pstm_set_pitch"
+  },
+  {
+   "addr": "0x5844",
+   "name": "hcmd_29_pstm_set_fx_ch"
+  },
+  {
+   "addr": "0x5860",
+   "name": "hcmd_2a_pstm_set_fx_lev"
+  },
+  {
+   "addr": "0x5878",
+   "name": "hcmd_2b_pstm_set_drct_lev"
+  },
+  {
+   "addr": "0x5890",
+   "name": "hcmd_2e_pstm_reset_prm"
+  },
+  {
+   "addr": "0x58bc",
+   "name": "hcmd_2f_pstm_stop_all"
+  },
+  {
+   "addr": "0x58d4",
+   "name": "hcmd_35_gdda_set_vol"
+  },
+  {
+   "addr": "0x58fc",
+   "name": "hcmd_36_gdda_set_pan"
+  },
+  {
+   "addr": "0x5944",
+   "name": "hcmd_3e_gdda_reset_prm"
+  },
+  {
+   "addr": "0x5968",
+   "name": "hcmd_80_snd_stop_all"
+  },
+  {
+   "addr": "0x5a50",
+   "name": "hcmd_81_snd_set_master_vol"
+  },
+  {
+   "addr": "0x5a8c",
+   "name": "fx_cmd_set_out"
+  },
+  {
+   "addr": "0x5bd8",
+   "name": "fx_cmd_set_out_prm"
+  },
+  {
+   "addr": "0x5c94",
+   "name": "hcmd_84_fx_prg_select"
+  },
+  {
+   "addr": "0x5e70",
+   "name": "host_cmd_push_event"
+  },
+  {
+   "addr": "0x5ea0",
+   "name": "host_cmd_drum_mode"
+  },
+  {
+   "addr": "0x5f54",
+   "name": "fx_cmd_set_dsp_pan"
+  },
+  {
+   "addr": "0x6040",
+   "name": "host_cmd_nop89"
+  },
+  {
+   "addr": "0x6044",
+   "name": "host_cmd_mono"
+  },
+  {
+   "addr": "0x6094",
+   "name": "host_cmd_reinit"
+  },
+  {
+   "addr": "0x60d8",
+   "name": "host_cmd_reboot"
+  }
+ ],
+ "comments": [
+  {
+   "addr": "0x4b98",
+   "kind": "pre",
+   "text": "Unused host command (codes 0x00,0x09,0x0D,0x10,0x20,0x23,0x24,0x2C,0x2D,0x30-0x34,0x37-0x3D,0x3F,0x8B-0x8D): mov pc,lr, result r0 = code*4 (table offset)."
+  },
+  {
+   "addr": "0x4b9c",
+   "kind": "pre",
+   "text": "host 0x01 sdMidiPlay: [2]=port [3]=SMSB bank [4]=song [5]=prio<<3.\nChecks bank table 0x14000+bank*8 (\"SMSB\", version 1, \"ENDB\" at size-4) -> seq_play(port,song,prio,bank=r12); PortState.status = (status&0xFC)|(state&3), err = g_seq.err, bit7 = err!=0; g_seq.err = 0.\nBank error: status|=0x80, err_hi|=2/8/4, result = err_hi. Success result = port<<7."
+  },
+  {
+   "addr": "0x4c80",
+   "kind": "pre",
+   "text": "host 0x02 sdMidiStop: [2]=port.\nKeys off + frees all voices of the port (voice word0=0, AICA ctl=(ctl&0x7FF)|KYONEX), seq_stop, port status sync. Result port<<7."
+  },
+  {
+   "addr": "0x4d18",
+   "kind": "pre",
+   "text": "host 0x03 sdMidiPause: [2]=port.\nKeys off the port's voices (Voice records kept), seq_pause, port status sync. Result port<<7."
+  },
+  {
+   "addr": "0x4da4",
+   "kind": "pre",
+   "text": "host 0x04 sdMidiContinue: [2]=port.\nseq_continue, port status sync. Result port<<7."
+  },
+  {
+   "addr": "0x4df0",
+   "kind": "pre",
+   "text": "host 0x05 sdMidiSetVol: [2]=port [3]=vol+0x80 [4..5]=fade.\nPortState vol_target=[3], interval=count=fade>>3, step=|volume-target|; step and interval halved together while both >=2. fade 0: interval 0, step 0. Result 0."
+  },
+  {
+   "addr": "0x4e78",
+   "kind": "pre",
+   "text": "host 0x06 sdMidiSetPan (lib-only): [2]=port [3]=pan+0x80 [4..5]=fade.\nAs 0x05 for PortState pan_* (+6..+0xA). Result 0."
+  },
+  {
+   "addr": "0x4f00",
+   "kind": "pre",
+   "text": "host 0x07 sdMidiSetSpeed (lib-only): [2]=port [4..5]=speed*4+0x8000 [6..7]=fade.\nspeed_target = speed&0xFFF0 (fade also masked 0xFFF0), interval = fade>>3, step=|speed-target|&0xFFF0 halved with interval while both>=2, clamp 0xFF (fade 0 -> step 0xFF). Result 0."
+  },
+  {
+   "addr": "0x4fa0",
+   "kind": "pre",
+   "text": "host 0x08 sdMidiSetPitch: [2]=port [4..5]=pitch+0x8000 [6..7]=fade.\npitch_target = pitch&0xFFFE, interval=(fade&0xFFFE)>>3, step=|pitch-target|&0xFFFE; do-while halving (always at least once), clamp 0xFF. Result 0."
+  },
+  {
+   "addr": "0x5038",
+   "kind": "pre",
+   "text": "host 0x0A sdMidiSetFxLev: [2]=port [3]=lev+0x80. PortState.fx_send = [3] (no dirty flag: new notes only). Result 0."
+  },
+  {
+   "addr": "0x505c",
+   "kind": "pre",
+   "text": "host 0x0B sdMidiSetDrctLev (lib-only): [2]=port [3]=lev+0x80. PortState.direct_lvl = [3]. Result 0."
+  },
+  {
+   "addr": "0x5080",
+   "kind": "pre",
+   "text": "host 0x0C (no sd 1.00.18 API): [2]=port. seq_break_loop (SeqPlayer.loop_left = 0). Result port&7."
+  },
+  {
+   "addr": "0x5094",
+   "kind": "pre",
+   "text": "host 0x0E sdMidiResetPrm/ResetAllPrm (lib-only): [2]=port or 0xFF=all.\nr4=&g_port[port], r6=&g_seq_player[port], falls into port_reset_prm (0x50B8). Result 0."
+  },
+  {
+   "addr": "0x5158",
+   "kind": "pre",
+   "text": "host 0x0F sdMidiStopAll (lib-only): no params.\nKeys off + frees all 48 voices, then seq_stop + port status sync for ports 0..7. Result 8."
+  },
+  {
+   "addr": "0x51f4",
+   "kind": "pre",
+   "text": "host 0x11 sdShotPlay: [2]=port [3]=SOSB bank [4]=data [5]=prio<<3.\nChecks bank 0x14100+bank*8 (\"SOSB\", version 1, \"ENDB\") -> shot_play(port,data,prio,bank); player flags bit7 = err!=0, g_shot_status[port].err = err, err = 0. Result = new flags.\nBank error: flags|=0x80, g_shot_status[port].err_hi |= 2/8/4, result = err_hi."
+  },
+  {
+   "addr": "0x52e4",
+   "kind": "pre",
+   "text": "host 0x12 sdShotStop (lib-only): [2]=port -> shot_stop. Result = port (r0 saved)."
+  },
+  {
+   "addr": "0x52f8",
+   "kind": "pre",
+   "text": "host 0x13 (no library API, shot pause): [2]=port -> shot_pause. Result = port."
+  },
+  {
+   "addr": "0x530c",
+   "kind": "pre",
+   "text": "host 0x14 (no library API, shot continue): [2]=port -> shot_continue. Result = port."
+  },
+  {
+   "addr": "0x5320",
+   "kind": "pre",
+   "text": "host 0x15 sdShotSetVol: [2]=port [3]=vol+0x80 [4..5]=fade -> shot_set_vol(r0,r1,r2). Result port&7 (callee masks r0; pcm_fade_calc/pcm_next_ch leave it)."
+  },
+  {
+   "addr": "0x5348",
+   "kind": "pre",
+   "text": "host 0x16 sdShotSetPan (lib-only): [2]=port [3]=pan+0x80 [4..5]=fade -> shot_set_pan. Result port&7."
+  },
+  {
+   "addr": "0x5370",
+   "kind": "pre",
+   "text": "host 0x17 sdShotSetSpeed (lib-only): [2]=port [4..5]=speed+0x8000 [6..7]=fade.\nPcmPlayer speed_target/interval/count/step (+0x40..+0x4A). Quirk: halving loop only runs while interval<=1 (inverted test). Clamp 0xFF. Result 0."
+  },
+  {
+   "addr": "0x5410",
+   "kind": "pre",
+   "text": "host 0x18 sdShotSetPitch: [2]=port [4..5]=pitch+0x8000 [6..7]=fade.\nAs 0x17 for PcmPlayer pitch_* (+0x4C..+0x56). Result 0."
+  },
+  {
+   "addr": "0x54b0",
+   "kind": "pre",
+   "text": "host 0x19 sdShotSetFxCh (lib-only): [2]=port [3]=fx_in_ch [4]=base_lev+0x80 -> shot_set_fx_ch. Result port&7 (r0 masked by the callee, untouched after)."
+  },
+  {
+   "addr": "0x54cc",
+   "kind": "pre",
+   "text": "host 0x1A sdShotSetFxLev: [2]=port [3]=lev+0x80 -> shot_set_fx_lvl ([4] loaded into r2 but unused). Result port&7."
+  },
+  {
+   "addr": "0x54e8",
+   "kind": "pre",
+   "text": "host 0x1B sdShotSetDrctLev (lib-only): [2]=port [3]=lev+0x80 -> shot_set_direct_lvl. Result port&7."
+  },
+  {
+   "addr": "0x5504",
+   "kind": "pre",
+   "text": "host 0x1C (no library API): [2]=port [3]=mode 0..2 [4..7]=param -> shot_set_loop_mode. Result port&7; mode > 2: callee exits via pcm_err_exit (0x81C4), which pops THIS routine's saved lr and returns straight to host_cmd_poll with r0 = the player's old err byte (before |= 0x20)."
+  },
+  {
+   "addr": "0x5520",
+   "kind": "pre",
+   "text": "host 0x1E sdShotResetPrm/ResetAllPrm (lib-only): [2]=port, 0xFF -> shot_reset_prm_all. Result port&7, or 0xFF for all."
+  },
+  {
+   "addr": "0x554c",
+   "kind": "pre",
+   "text": "host 0x1F sdShotStopAll: no params -> shot_stop_all. Result = g_pcm_slot[15].kind (r0 = last kind byte loaded by the slot scan, read before the slot is released)."
+  },
+  {
+   "addr": "0x5560",
+   "kind": "pre",
+   "text": "host 0x21 sdPstmPlay: [2]=port|0x80 stereo|fmt<<4 [3]=base vol [4..5]=freq (OCT/FNS) [6]=prio<<3 [7]=SPSR bank ch0 [8]=SPSR bank ch1.\npstm_play(r0=port, r1=fmt, r2=[7]|[8]<<8|stereo<<16, r3=[3], r4=freq, r5=[6]); exported flags of both channels &= 0xE8; per channel player: flags bit7=err!=0, status +0x1C=err, err=0. Result 0."
+  },
+  {
+   "addr": "0x5638",
+   "kind": "pre",
+   "text": "host 0x22 sdPstmStop: [2]=port -> pstm_stop; exported flags of both channels &= 0xE8. Result = port."
+  },
+  {
+   "addr": "0x567c",
+   "kind": "pre",
+   "text": "host 0x25 sdPstmSetVol: [2]=port|0x20 ch0|0x10 ch1 [3]=vol0 [4..5]=fade0 [7]=vol1 [8..9]=fade1 -> pstm_set_vol(r0,r1,r2,r4,r5). Result [2]&~0x10 (pcm_next_ch clears the ch1 bit in r0)."
+  },
+  {
+   "addr": "0x56b0",
+   "kind": "pre",
+   "text": "host 0x26 sdPstmSetPan: layout as 0x25 with pan values -> pstm_set_pan(r0,r1,r2,r4,r5). Result [2]&~0x10."
+  },
+  {
+   "addr": "0x56e4",
+   "kind": "pre",
+   "text": "host 0x27 sdPstmSetSpeed (lib-only): [2]=port [4..5]=speed+0x8000 [6..7]=fade. As 0x17, stored in both channel players (+0x40, +0x98). Result 0."
+  },
+  {
+   "addr": "0x5794",
+   "kind": "pre",
+   "text": "host 0x28 sdPstmSetPitch (lib-only): as 0x27 for pitch (+0x4C, +0xA4). Result 0."
+  },
+  {
+   "addr": "0x5844",
+   "kind": "pre",
+   "text": "host 0x29 sdPstmSetFxCh: [2]=port [3]=fx_in_ch [4]=base_lev+0x80 -> pstm_set_fx_ch. Result [2] (callee masks the port into r8, r0 untouched)."
+  },
+  {
+   "addr": "0x5860",
+   "kind": "pre",
+   "text": "host 0x2A sdPstmSetFxLev: [2]=port [3]=lev+0x80 -> pstm_set_fx_lvl. Result [2]."
+  },
+  {
+   "addr": "0x5878",
+   "kind": "pre",
+   "text": "host 0x2B sdPstmSetDrctLev (lib-only): [2]=port [3]=lev+0x80 -> pstm_set_direct_lvl. Result [2]."
+  },
+  {
+   "addr": "0x5890",
+   "kind": "pre",
+   "text": "host 0x2E sdPstmResetPrm/ResetAllPrm (lib-only): [2]=port, 0xFF -> pstm_reset_prm_all. Result [2] (0xFF for all)."
+  },
+  {
+   "addr": "0x58bc",
+   "kind": "pre",
+   "text": "host 0x2F sdPstmStopAll (lib-only) -> pstm_stop_all. Result = g_pcm_slot[15].kind as read by the slot scan (as 0x1F)."
+  },
+  {
+   "addr": "0x58d4",
+   "kind": "pre",
+   "text": "host 0x35 sdGddaSetVol (lib-only): [2]=l [3]=r (vol*2). Byte writes [2]>>4 -> 0x802041, [3]>>4 -> 0x802045 (EFSDL of EXTS0/1). Result 0."
+  },
+  {
+   "addr": "0x58fc",
+   "kind": "pre",
+   "text": "host 0x36 sdGddaSetPan (lib-only): [2]=l+0x80 [3]=r+0x80. (x>>3)-16 -> AICA sign/magnitude pan, byte writes to 0x802040/0x802044 (EFPAN). Result 0."
+  },
+  {
+   "addr": "0x5944",
+   "kind": "pre",
+   "text": "host 0x3E sdGddaResetPrm (lib-only): DSP_OUT(16)=DSP_OUT(17)=0. Result 0."
+  },
+  {
+   "addr": "0x5968",
+   "kind": "pre",
+   "text": "host 0x80 sdSndStopAll: [2]=[3]=[4]=[5]=1 [6]=[7]=0 from the library. Each nonzero byte enables a part:\n[2] key off+free all 48 voices, seq_stop ports 0..7 (no status sync); [3] shot_stop_all; [4] pstm_stop_all; [5] DSP_OUT(16/17)=0 (GD-DA); [6] fx_prg_clear; [7] DSP_OUT(0..15)=0. Result 0."
+  },
+  {
+   "addr": "0x5a50",
+   "kind": "pre",
+   "text": "host 0x81 sdSndSetMasterVol: [2]=(vol<<4)&0xFF. master_vol (0x13424) = [2]>>4; if mono (0x13404) clamp 13; byte write to MVOL (VER=0, MONO bit kept). Result 0."
+  },
+  {
+   "addr": "0x5a8c",
+   "kind": "pre",
+   "text": "host 0x82 sdSndSetFxOut / 2nd half of sdSndSetFxPrg: [2]=fx_out_num. See fx.c."
+  },
+  {
+   "addr": "0x5bd8",
+   "kind": "pre",
+   "text": "host 0x83 sdSndSetFxOutPrm (lib-only): [2]=out [3]=lev+0x80 [4]=pan+0x80. See fx.c."
+  },
+  {
+   "addr": "0x5c94",
+   "kind": "pre",
+   "text": "host 0x84 sdSndSetFxPrg (1st command): [2]=fx_prg_num. Loads r0=[2] and falls into fx_prg_select (0x5C98)."
+  },
+  {
+   "addr": "0x5e70",
+   "kind": "pre",
+   "text": "host 0x86 sdMidiSendMes: [4..7] = packed event (mes[0]=data2, mes[1]=data1, mes[2]=port<<4|ch, mes[3]=type) pushed raw into the event ring (no full check). See fx.c."
+  },
+  {
+   "addr": "0x5ea0",
+   "kind": "pre",
+   "text": "host 0x87 (no library API): [2] bit0 = drum mode, [3]&7 = port; MIDI channel 10 of the port. See fx.c."
+  },
+  {
+   "addr": "0x5f54",
+   "kind": "pre",
+   "text": "host 0x88 sdQsndSetPos: [2..9] per-slot DSP pan presets. See fx.c."
+  },
+  {
+   "addr": "0x6040",
+   "kind": "pre",
+   "text": "host 0x89: no-op (result 0x24)."
+  },
+  {
+   "addr": "0x6044",
+   "kind": "pre",
+   "text": "host 0x8A sdSndSetSpace: [2]=0xFF mono / 0 stereo. See fx.c."
+  },
+  {
+   "addr": "0x6094",
+   "kind": "pre",
+   "text": "host 0x8E (no library API): soft reset with FIQ masked. See fx.c."
+  },
+  {
+   "addr": "0x60d8",
+   "kind": "pre",
+   "text": "host 0x8F (no library API): [4..7]==\"SEGA\" -> reset and hang. See fx.c. If not \"SEGA\": result = the first mismatching byte (left in r0 by ldrb/cmp/movne pc,lr)."
+  },
+  {
+   "addr": "0x4968",
+   "kind": "eol",
+   "text": "result byte -> log entry +1 (also for empty slots: r0 = 0 overwrites the last command's result)"
+  },
+  {
+   "addr": "0x4970",
+   "kind": "eol",
+   "text": "clear only the code byte of the slot"
+  },
+  {
+   "addr": "0x49cc",
+   "kind": "eol",
+   "text": "log word 3 = ticks since previous command (slot bytes 12..15 are not logged)"
+  },
+  {
+   "addr": "0x49f0",
+   "kind": "eol",
+   "text": "end marker: next log entry = 4 x 0xFFFFFFFF"
+  },
+  {
+   "addr": "0x4a08",
+   "kind": "eol",
+   "text": "r0 = code*4: table offset, also the result of unused/rejected codes"
+  },
+  {
+   "addr": "0x4a1c",
+   "kind": "eol",
+   "text": "codes 0x40-0x7F: ignored"
+  },
+  {
+   "addr": "0x4a38",
+   "kind": "eol",
+   "text": "codes 0x90-0xFF: ignored"
+  },
+  {
+   "addr": "0x4c1c",
+   "kind": "eol",
+   "text": "r1 = SeqPlayer.state returned by the sequencer: play/pause bits"
+  },
+  {
+   "addr": "0x4c44",
+   "kind": "eol",
+   "text": "only the play command clears g_seq.err"
+  },
+  {
+   "addr": "0x4e2c",
+   "kind": "eol",
+   "text": "abs(cur - target)"
+  },
+  {
+   "addr": "0x4e40",
+   "kind": "eol",
+   "text": "halve step and interval while both >= 2"
+  },
+  {
+   "addr": "0x4f1c",
+   "kind": "eol",
+   "text": "0xFFF0 masks both speed and fade (quirk)"
+  },
+  {
+   "addr": "0x4fe8",
+   "kind": "eol",
+   "text": "do-while: always halved at least once (stored step = delta/2)"
+  },
+  {
+   "addr": "0x53cc",
+   "kind": "eol",
+   "text": "quirk: exits when interval >= 2 (inverted vs. MIDI port version)"
+  },
+  {
+   "addr": "0x55b4",
+   "kind": "eol",
+   "text": "dead code: r1/r2 & 0x17 ORed into r3, which is reloaded below"
+  },
+  {
+   "addr": "0x5a78",
+   "kind": "eol",
+   "text": "mono: MVOL clamped to 13"
+  },
+  {
+   "addr": "0x5a80",
+   "kind": "eol",
+   "text": "byte write: MVOL=vol, VER=0, MONO (bit 15) untouched"
+  },
+  {
+   "addr": "0x508c",
+   "kind": "eol",
+   "text": "result: seq_break_loop leaves r0 = port & 7 (and r0,r0,#7) - not saved here"
+  },
+  {
+   "addr": "0x5518",
+   "kind": "eol",
+   "text": "not reached for mode > 2: pcm_err_exit popped our lr and returned to host_cmd_poll"
+  },
+  {
+   "addr": "0x5550",
+   "kind": "eol",
+   "text": "shot_stop_all leaves r0 = g_pcm_slot[15].kind (result)"
+  },
+  {
+   "addr": "0x58c0",
+   "kind": "eol",
+   "text": "pstm_stop_all leaves r0 = g_pcm_slot[15].kind (result)"
+  },
+  {
+   "addr": "0x5338",
+   "kind": "eol",
+   "text": "shot_set_vol leaves r0 = port & 7 (result)"
+  },
+  {
+   "addr": "0x56a0",
+   "kind": "eol",
+   "text": "pstm_set_vol leaves r0 = [2] & ~0x10 (result)"
+  },
+  {
+   "addr": "0x5a2c",
+   "kind": "eol",
+   "text": "[7] == 0: return with r0 = 0"
+  },
+  {
+   "addr": "0x5970",
+   "kind": "eol",
+   "text": "[2] == 0: skip the MIDI part"
+  }
+ ]
+}

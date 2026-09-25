@@ -1,0 +1,184 @@
+<!-- title: Overview -->
+<div class="hero">
+  <div class="eyebrow">Dreamcast · AICA · ARM7 · DSP · Manatee</div>
+  <h1>Dreamcast audio and the Manatee sound driver</h1>
+  <p class="lead">A guided tour of the Dreamcast's audio subsystem and of <strong>Manatee</strong>, the
+  sound driver Sega shipped with its SDK and that a large part of the Dreamcast library runs on the sound
+  processor: from SH-4 game code asking for a sound, across the G2 bus, into a hand-written ARM kernel that
+  plays music, sound effects and streams on 64 hardware voices and a programmable reverb DSP.</p>
+  <div class="legend">
+    <span class="chip host"><i></i>SH-4 / game side</span>
+    <span class="chip arm"><i></i>ARM7 / sound driver</span>
+    <span class="chip aica"><i></i>AICA sound hardware</span>
+    <span class="chip dsp"><i></i>DSP / effects</span>
+    <span class="chip mem"><i></i>Memory</span>
+  </div>
+</div>
+
+<div class="callout note">
+  <div class="title">One driver, many games</div>
+  <p>Games built on Sega's Katana SDK did not usually write their own sound engine: they linked Sega's
+  <strong>sd</strong> library on the SH-4 and loaded a Manatee driver image (<code>manatee.drv</code>) into
+  the AICA. Different SDK releases shipped different Manatee builds. Everything here is taken from one
+  concrete, fully decompiled build, <strong>v1.1 build 0x3F, dated 1999-03-18</strong>, as shipped in
+  <em>Soul Calibur</em> (USA). The architecture and concepts apply to Manatee in general; exact details
+  such as specific bugs, command codes or table layouts may differ in other versions.</p>
+</div>
+
+<div class="grid four">
+  <div class="card tile"><div class="val">64</div><div class="lbl">hardware voices, 44.1 kHz</div></div>
+  <div class="card tile"><div class="val">2 MB</div><div class="lbl">sound RAM shared by everything</div></div>
+  <div class="card tile"><div class="val">33 KB</div><div class="lbl">Manatee driver image (this build)</div></div>
+  <div class="card tile"><div class="val">4 ms</div><div class="lbl">driver heartbeat (exact)</div></div>
+</div>
+
+<h2 id="big-picture">The big picture</h2>
+<p>The Dreamcast has two processors involved in sound. The <strong>SH-4</strong> runs the game and Sega's
+sound library; it never touches a sound voice directly. The <strong>AICA</strong> is a Yamaha sound chip
+with its own <strong>ARM7DI</strong> CPU, 64 sample-playback voices, an effects <strong>DSP</strong>, a
+mixer and 2 MB of dedicated <strong>sound RAM</strong>. The SH-4 loads a driver program into sound RAM,
+starts the ARM, and from then on talks to it only through shared memory.</p>
+
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 440" role="img" aria-label="Block diagram of the Dreamcast sound system">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <!-- SH-4 side -->
+    <g class="hover" data-tip="SH-4 CPU|Hitachi SH-4 at 200 MHz. Runs the game and Sega's 'sd' sound library, which queues commands for the driver once per frame.">
+      <rect class="host" x="20" y="40" width="200" height="110" rx="10"/>
+      <text x="40" y="72" font-weight="700" font-size="17">SH-4 CPU</text>
+      <text x="40" y="96" class="t-sec" font-size="13">200 MHz · runs the game</text>
+      <text x="40" y="116" class="t-sec" font-size="13">+ Sega "sd" sound library</text>
+      <text x="40" y="136" class="t-muted" font-size="12">sdMidiPlay(), sdShotPlay() …</text>
+    </g>
+    <g class="hover" data-tip="Main RAM|16 MB of SH-4 RAM. Sound banks and stream data are loaded from disc here first, then copied to sound RAM.">
+      <rect class="mem" x="20" y="190" width="200" height="60" rx="10"/>
+      <text x="40" y="218" font-weight="650" font-size="15">Main RAM · 16 MB</text>
+      <text x="40" y="238" class="t-sec" font-size="12.5">banks &amp; streams staged here</text>
+    </g>
+    <g class="hover" data-tip="GD-ROM|The disc drive. Game data arrives via the SH-4; CD audio tracks can be fed digitally into the AICA's external inputs.">
+      <rect class="box" x="20" y="290" width="200" height="60" rx="10"/>
+      <text x="40" y="318" font-weight="650" font-size="15">GD-ROM drive</text>
+      <text x="40" y="338" class="t-sec" font-size="12.5">data · CD-DA audio</text>
+    </g>
+    <g class="hover" data-tip="Holly|The system ASIC (graphics + bus controller). Its G2 bus is the only path from the SH-4 to the AICA; it also has DMA channels that copy main RAM to sound RAM.">
+      <rect class="box" x="262" y="40" width="140" height="210" rx="10"/>
+      <text x="280" y="72" font-weight="700" font-size="16">Holly</text>
+      <text x="280" y="94" class="t-sec" font-size="12.5">system ASIC</text>
+      <text x="280" y="130" class="t-sec" font-size="12.5">G2 bus bridge</text>
+      <text x="280" y="150" class="t-sec" font-size="12.5">G2 DMA</text>
+      <text x="280" y="170" class="t-sec" font-size="12.5">interrupt routing</text>
+    </g>
+    <path class="wire-thick" d="M220 95 H262" marker-end="url(#ar)" marker-start="url(#ar)"/>
+    <path class="wire" d="M120 150 V190" marker-end="url(#ar)" marker-start="url(#ar)"/>
+    <!-- G2 bus -->
+    <path class="wire-thick" d="M402 120 H452" marker-end="url(#ar)" marker-start="url(#ar)"/>
+    <text x="408" y="110" class="t-muted" font-size="12">G2 bus</text>
+
+    <!-- AICA -->
+    <rect class="aica" x="452" y="16" width="390" height="400" rx="14" style="fill: var(--c-aica-soft)"/>
+    <text x="470" y="42" font-weight="800" font-size="17">AICA</text>
+    <text x="528" y="42" class="t-sec" font-size="12.5">Yamaha sound chip</text>
+
+    <g class="hover" data-tip="ARM7DI|The sound CPU inside the AICA. Runs the driver from sound RAM. It is only ever interrupted via FIQ.">
+      <rect class="arm" x="470" y="60" width="165" height="72" rx="9"/>
+      <text x="486" y="88" font-weight="700" font-size="15">ARM7DI</text>
+      <text x="486" y="108" class="t-sec" font-size="12.5">runs the sound driver</text>
+      <text x="486" y="124" class="t-muted" font-size="11.5">"manatee.drv"</text>
+    </g>
+    <g class="hover" data-tip="Sound RAM|2 MB shared by the ARM (code + data), the voices (sample data), the DSP (delay ring buffer) and the SH-4 (via G2).">
+      <rect class="mem" x="655" y="60" width="170" height="72" rx="9"/>
+      <text x="671" y="88" font-weight="700" font-size="15">Sound RAM 2 MB</text>
+      <text x="671" y="108" class="t-sec" font-size="12.5">driver · banks · samples</text>
+      <text x="671" y="124" class="t-muted" font-size="11.5">stream rings · reverb buffer</text>
+    </g>
+    <g class="hover" data-tip="Sound generator|64 channels ('slots'): each plays a sample from sound RAM with its own pitch, envelope, filter, LFO, level and pan.">
+      <rect class="aica" x="470" y="160" width="165" height="72" rx="9"/>
+      <text x="486" y="188" font-weight="700" font-size="15">64 voices</text>
+      <text x="486" y="208" class="t-sec" font-size="12.5">PCM / ADPCM playback</text>
+      <text x="486" y="224" class="t-muted" font-size="11.5">EG · filter · LFO</text>
+    </g>
+    <g class="hover" data-tip="DSP|A tiny programmable signal processor: 128 instructions per sample, 16 inputs from the voices, delay lines in sound RAM. Used for reverb.">
+      <rect class="dsp" x="655" y="160" width="170" height="72" rx="9"/>
+      <text x="671" y="188" font-weight="700" font-size="15">Effect DSP</text>
+      <text x="671" y="208" class="t-sec" font-size="12.5">reverb / delay</text>
+      <text x="671" y="224" class="t-muted" font-size="11.5">128 steps per sample</text>
+    </g>
+    <g class="hover" data-tip="Mixer and DAC|Sums the direct outputs of all voices, the 16 DSP outputs and CD audio into the stereo output.">
+      <rect class="box" x="560" y="262" width="175" height="54" rx="9"/>
+      <text x="578" y="286" font-weight="700" font-size="15">Mixer · DAC</text>
+      <text x="578" y="304" class="t-sec" font-size="12.5">stereo out, master volume</text>
+    </g>
+    <g class="hover" data-tip="Timers & interrupt controller|Three sample-rate timers and an interrupt controller with two targets: the ARM (via FIQ) and the SH-4 (via Holly).">
+      <rect class="box" x="470" y="340" width="165" height="58" rx="9"/>
+      <text x="486" y="364" font-weight="650" font-size="14">Timers · interrupts</text>
+      <text x="486" y="384" class="t-sec" font-size="12">FIQ to ARM · IRQ to SH-4</text>
+    </g>
+    <g class="hover" data-tip="MIDI port|A MIDI UART inside the AICA. Unused on a retail console; the driver still listens to it (for development tools).">
+      <rect class="box" x="655" y="340" width="170" height="58" rx="9"/>
+      <text x="671" y="364" font-weight="650" font-size="14">MIDI in / out</text>
+      <text x="671" y="384" class="t-sec" font-size="12">dev tools only</text>
+    </g>
+    <!-- internal wires -->
+    <path class="wire" d="M635 96 H655" marker-end="url(#ar)" marker-start="url(#ar)"/>
+    <path class="wire" d="M552 132 V160" marker-end="url(#ar)"/>
+    <text x="558" y="150" class="t-muted" font-size="11">programs</text>
+    <path class="wire" d="M740 132 V160" marker-end="url(#ar)" marker-start="url(#ar)"/>
+    <path class="wire" d="M635 196 H655" marker-end="url(#ar)"/>
+    <path class="wire" d="M552 232 V289 H560" marker-end="url(#ar)"/>
+    <path class="wire" d="M740 232 V289 H735" marker-end="url(#ar)"/>
+    <path class="wire dash" d="M470 356 H461 V96 H468" marker-end="url(#ar)" style="stroke: var(--c-arm)"/>
+    <text x="436" y="300" font-size="11" class="t-muted">FIQ</text>
+    <path class="wire dash" d="M470 384 H430 V232 H404" marker-end="url(#ar)" style="stroke: var(--c-host)"/>
+    <text x="408" y="224" font-size="11" class="t-muted">IRQ</text>
+    <path class="wire" d="M735 295 H842" marker-end="url(#ar)"/>
+    <text x="760" y="286" font-size="12" class="t-sec">🔊 out</text>
+    <path class="wire dash" d="M220 320 H420 V330 H545 V300 H558" marker-end="url(#ar)"/>
+    <text x="270" y="312" font-size="11" class="t-muted">CD audio (digital)</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 1.</b> The Dreamcast sound system. Colours mark who owns what; dashed lines are
+  interrupt and audio side paths. Hover any block for a one-line description.</figcaption>
+</figure>
+
+<h3>A sound's journey in one paragraph</h3>
+<p>A game calls, say, <code>sdShotPlay()</code>. The SH-4 library writes a 16-byte command into a queue in
+main RAM; once per video frame it copies the whole batch across the G2 bus into a mailbox in sound RAM
+and raises a flag byte. Within 4 ms the ARM driver notices the flag, decodes the command, picks a free
+AICA channel, copies a pre-built register image of the sample into it and sets its <em>key-on</em>
+bit. The voice starts reading sample data from sound RAM, shapes it with its envelope and filter, and
+sends it both straight to the mixer and into the DSP, where a reverb program adds the room. The driver
+writes a status record back into sound RAM so the game can see that the sound is playing.</p>
+
+<h2 id="how-to-read">How this guide is organised</h2>
+<div class="grid two">
+  <a class="card pagecard" href="hardware.html"><span class="tag">Hardware</span><h4>Dreamcast audio hardware</h4>
+    <p>SH-4, Holly and the G2 bus, the AICA's blocks, the ARM7DI, and the two views of memory.</p></a>
+  <a class="card pagecard" href="channel.html"><span class="tag">Hardware</span><h4>How an AICA channel makes sound</h4>
+    <p>Samples and formats, loops, pitch, envelopes, the resonant filter, LFOs, levels and key on/off.</p></a>
+  <a class="card pagecard" href="dsp.html"><span class="tag">Hardware + driver</span><h4>The DSP and effects</h4>
+    <p>How a 128-step microprogram and a delay ring buffer make reverb, and how the driver swaps programs.</p></a>
+  <a class="card pagecard" href="communication.html"><span class="tag">Hardware + driver</span><h4>SH-4 ↔ ARM communication</h4>
+    <p>FIQ, interrupt levels, the timer heartbeat, and the mailbox protocol Manatee actually uses.</p></a>
+  <a class="card pagecard" href="driver.html"><span class="tag">Driver</span><h4>Driver architecture</h4>
+    <p>Boot, the main loop, the event ring that unifies everything, and the sound-RAM memory map.</p></a>
+  <a class="card pagecard" href="music.html"><span class="tag">Driver</span><h4>The MIDI engine &amp; voices</h4>
+    <p>Ports, channels, tone banks, what happens on note-on, voice stealing and controllers.</p></a>
+  <a class="card pagecard" href="sequencer.html"><span class="tag">Driver</span><h4>The sequencer</h4>
+    <p>How songs are stored and timed, generated note-offs, loops, calls, tempo and priorities.</p></a>
+  <a class="card pagecard" href="sfx.html"><span class="tag">Driver</span><h4>One-shots &amp; PCM streams</h4>
+    <p>Sound effects, voices and streamed music on the 16 channels reserved for them.</p></a>
+</div>
+
+<div class="callout note">
+  <div class="title">Where this comes from</div>
+  <p>Everything about the driver was established by decompiling the Soul Calibur copy of it: the image
+  was extracted from the game's <code>CINIT.DAT</code>, analysed in Ghidra, and rewritten as C in <code>src/arm/</code>, with every function
+  independently re-checked against the disassembly. The SH-4 side comes from disassembling Sega's sound
+  library as linked into the game. General AICA hardware behaviour (what a register <em>does</em>) is
+  standard Dreamcast knowledge and is marked as such where it matters. The <a href="quirks.html">Bugs,
+  quirks &amp; confidence</a> page lists what is certain and what is not.</p>
+</div>

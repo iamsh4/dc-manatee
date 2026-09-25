@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The DSP and effects · Dreamcast audio &amp; the Manatee driver</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <button id="nav-toggle" class="icon-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+<circle cx="16" cy="16" r="15" fill="none" stroke="var(--c-aica)" stroke-width="2"/>
+<path d="M5 16 C8 6, 11 6, 13 16 S18 26, 20 16 S25 8, 27 16" fill="none" stroke="var(--c-arm)" stroke-width="2.4" stroke-linecap="round"/>
+</svg><span>Manatee <small>· Dreamcast audio &amp; sound driver, explained</small></span></a>
+  <div class="spacer"></div>
+  <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme"></button>
+</header>
+<div class="layout">
+  <nav class="sidebar" aria-label="Pages"></nav>
+  <main>
+    <article class="content">
+<div class="eyebrow">The hardware · and how Manatee uses it</div>
+<h1>The DSP and effects</h1>
+<p class="lead">Reverb, echo and chorus on the Dreamcast come from a small programmable signal processor
+inside the AICA. It runs one short program per output sample, reading the voices' effect sends and
+using a slice of sound RAM as its delay memory.</p>
+
+<h2 id="architecture">What the DSP is</h2>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 330" role="img" aria-label="AICA DSP signal flow">
+    <defs>
+      <marker id="d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <g class="hover" data-tip="Input buses|Every voice's effect send is added into one of 16 buses. Two more inputs carry CD audio.">
+      <rect class="aica" x="14" y="40" width="150" height="190" rx="9"/>
+      <text x="28" y="66" font-weight="700" font-size="14">Inputs</text>
+      <text x="28" y="92" class="t-sec" font-size="12.5">16 mix buses</text>
+      <text x="28" y="110" class="t-muted" font-size="11.5">sum of voice sends</text>
+      <text x="28" y="150" class="t-sec" font-size="12.5">2 external inputs</text>
+      <text x="28" y="168" class="t-muted" font-size="11.5">CD audio</text></g>
+    <g class="hover" data-tip="DSP core|Executes a fixed program of 128 steps once per sample (44,100 times a second). Each step can multiply, accumulate, read or write delay memory, and move data between registers.">
+      <rect class="dsp" x="200" y="20" width="360" height="230" rx="12"/>
+      <text x="218" y="48" font-weight="800" font-size="16">DSP core</text>
+      <text x="320" y="48" class="t-sec" font-size="12.5">128-step program, every sample</text>
+      <rect class="box" x="220" y="68" width="150" height="58" rx="7"/>
+      <text x="234" y="92" font-weight="650" font-size="13">Microprogram</text>
+      <text x="234" y="110" class="t-muted" font-size="11.5">128 instructions</text>
+      <rect class="box" x="390" y="68" width="150" height="58" rx="7"/>
+      <text x="404" y="92" font-weight="650" font-size="13">Coefficients</text>
+      <text x="404" y="110" class="t-muted" font-size="11.5">128 multipliers</text>
+      <rect class="box" x="220" y="140" width="150" height="58" rx="7"/>
+      <text x="234" y="164" font-weight="650" font-size="13">Working registers</text>
+      <text x="234" y="182" class="t-muted" font-size="11.5">temporary values</text>
+      <rect class="box" x="390" y="140" width="150" height="58" rx="7"/>
+      <text x="404" y="164" font-weight="650" font-size="13">Address table</text>
+      <text x="404" y="182" class="t-muted" font-size="11.5">64 delay-tap offsets</text>
+      <text x="218" y="232" class="t-muted" font-size="11.5">all loaded by the ARM from an effect program</text></g>
+    <g class="hover" data-tip="Ring buffer|A 16-128 KB region of sound RAM. Its read/write pointer advances one step per sample, so a fixed offset in the address table is a fixed delay time.">
+      <rect class="mem" x="200" y="272" width="360" height="46" rx="9"/>
+      <text x="218" y="300" font-weight="700" font-size="14">Delay ring buffer in sound RAM</text>
+      <text x="446" y="300" class="t-sec" font-size="12">16-128 KB</text></g>
+    <path class="wire" d="M380 250 V272" marker-end="url(#d1)" marker-start="url(#d1)"/>
+    <path class="wire" d="M164 135 H200" marker-end="url(#d1)"/>
+    <g class="hover" data-tip="Outputs|16 effect output registers, each routed to the mixer with its own level and pan.">
+      <rect class="dsp" x="596" y="40" width="120" height="190" rx="9"/>
+      <text x="610" y="66" font-weight="700" font-size="14">16 outputs</text>
+      <text x="610" y="92" class="t-sec" font-size="12.5">effect returns</text></g>
+    <path class="wire" d="M560 135 H596" marker-end="url(#d1)"/>
+    <g class="hover" data-tip="Output mixer|Level and pan per DSP output (and per CD input). This is what an 'FX output set' bank programs.">
+      <rect class="box" x="748" y="40" width="100" height="190" rx="9"/>
+      <text x="760" y="66" font-weight="700" font-size="14">Mixer</text>
+      <text x="760" y="92" class="t-sec" font-size="12">level + pan</text>
+      <text x="760" y="110" class="t-sec" font-size="12">per output</text>
+      <text x="760" y="150" class="t-muted" font-size="11.5">→ stereo</text></g>
+    <path class="wire" d="M716 135 H748" marker-end="url(#d1)"/>
+  </svg>
+  </div>
+  <figcaption><b>Figure 1.</b> The DSP between the voices and the mixer. The dry signal of every voice bypasses
+  all of this and goes straight to the mixer.</figcaption>
+</figure>
+
+<p>The DSP is not a general-purpose CPU: it has no branches. It runs the same <strong>128-step
+program</strong> once for every output sample. Each step can read an input bus, multiply by a
+<strong>coefficient</strong>, accumulate, read from or write to <strong>delay memory</strong>, or write one of
+the <strong>16 outputs</strong>. Its delay memory is a <strong>ring buffer in sound RAM</strong> whose base
+pointer moves by one every sample; an entry in the program's <strong>address table</strong> is therefore a
+fixed delay in samples, a "tap" into the past. Values are stored in delay memory in a compact floating-point
+format; in that format the all-zero pattern is <em>not</em> silence, which is why Manatee clears the buffer
+with a special value (<code>0x60006000</code>, two floating-point zeros).</p>
+
+<h3>How that makes reverb</h3>
+<p>A room reverb is built from delays: several <strong>feedback delay lines</strong> (combs) of different,
+unrelated lengths produce a dense tail of echoes, and <strong>all-pass</strong> stages smear them into a smooth
+wash. On the AICA each delay line is a pair of taps in the ring buffer, feedback amounts and filtering are
+coefficients, and the whole network fits in the 128 steps. Longer rooms need more delay memory, which is why
+each program states the ring-buffer size it requires (16, 32, 64 or 128 KB).</p>
+
+<h2 id="banks">Effect banks in Manatee</h2>
+<p>Manatee treats DSP programs as data, downloaded by the SH-4 like any other sound bank:</p>
+<div class="grid three">
+  <div class="card"><span class="chip dsp"><i></i>FX program bank</span>
+  <p style="margin-top:10px">A list of complete DSP programs. Each has a name, the ring-buffer size it
+  needs, its coefficients, address table and 128-step microprogram. Selecting one loads it into the DSP.</p></div>
+  <div class="card"><span class="chip dsp"><i></i>FX output bank</span>
+  <p style="margin-top:10px">A list of "output sets": for each of the 16 DSP outputs, a level and a pan.
+  This is how the stereo image of the reverb return is set.</p></div>
+  <div class="card"><span class="chip mem"><i></i>FX work area</span>
+  <p style="margin-top:10px">Not data at all: just an address and a size in sound RAM that the SH-4 sets
+  aside for the delay ring buffer. The driver refuses programs that need more than it provides.</p></div>
+</div>
+<p>The driver also carries a built-in program named <strong>"e-reverb"</strong> (a 128 KB reverb) and a
+built-in output set (outputs 0 and 1 hard left and right), used until the game downloads its own. Soul
+Calibur ships three reverbs in its initial data, named <em>outside</em>, <em>inside</em> and <em>BGM</em> (which one
+plays when is decided by game code on the SH-4, not traced here).</p>
+
+<h2 id="loading">Switching programs without a click</h2>
+<p>Replacing a running DSP program instantly would produce a burst of garbage from half-updated delay lines.
+Manatee does it in two phases:</p>
+<ol class="steps">
+  <li><strong>Select (on the command)</strong>The requested program is validated: the bank must carry the
+  right tag, version and end marker, the program number must exist, and the work area must be large enough.
+  Errors are reported to the SH-4 through the driver error word. If it passes, the program is queued.</li>
+  <li><strong>Load (on the next 4 ms tick)</strong>The DSP output mixer is faded out step by step, the DSP's
+  registers are cleared, the ring buffer is filled with floating-point silence, the coefficients, address
+  table and microprogram are copied in one burst, the ring-buffer register is pointed at the work area, and
+  the outputs are faded back in to their previous levels.</li>
+</ol>
+
+<h2 id="controls">What the game can control</h2>
+<div class="tablewrap"><table>
+  <tr><th>Control</th><th>How</th><th>Effect</th></tr>
+  <tr><td>Effect program</td><td>host command (<code>sdSndSetFxPrg</code>), or MIDI CC 79 on port 7</td><td>load a program from the FX program bank; value 0 of the CC switches the DSP off</td></tr>
+  <tr><td>Clear effect</td><td>host command (<code>sdSndClearFxPrg</code>)</td><td>fade out and silence the DSP</td></tr>
+  <tr><td>Output set</td><td>host command (<code>sdSndSetFxOut</code>)</td><td>apply an output set: level and pan for all 16 returns</td></tr>
+  <tr><td>Output offsets</td><td>host command (<code>sdSndSetFxOutPrm</code>), MIDI CC 77/78 on port 7</td><td>adjust one return's pan or level</td></tr>
+  <tr><td>Positional pan</td><td>host command (<code>sdQsndSetPos</code>), MIDI CC 80</td><td>for programs built with "pan slots": write equal-power-style pan coefficients into the program so a sound can be placed around the listener</td></tr>
+  <tr><td>How much reverb</td><td>per port: FX level command; per MIDI channel: CC 91; per sample: the bank's send level</td><td>the effect-send level of each voice</td></tr>
+  <tr><td>Which input bus</td><td>per MIDI channel: CC 76; per one-shot/stream: the "FX channel" command</td><td>which of the 16 DSP buses the voice feeds</td></tr>
+  <tr><td>CD audio</td><td>"GD-DA" volume/pan commands</td><td>level and pan of the two external inputs</td></tr>
+</table></div>
+<div class="callout driver">
+  <div class="title">Why port 7?</div>
+  <p>The DSP output and program controllers (CC 77-79) only work on MIDI port 7, the same port the driver
+  assigns to its external MIDI input. That fits a development workflow: a sound designer connected a
+  sequencer or editor to the AICA's MIDI port and tweaked reverb settings live.</p>
+</div>
+
+      <nav class="pager" aria-label="Previous and next page"></nav>
+      <div class="footer">Reference build: the Manatee driver shipped in Soul Calibur (USA), v1.1 build 0x3F. Built from the decompilation in this repository (<code>src/arm/</code>, <code>docs/</code>). Hover diagram elements for details.</div>
+    </article>
+  </main>
+  <aside class="toc" aria-label="On this page"></aside>
+</div>
+</body>
+</html>

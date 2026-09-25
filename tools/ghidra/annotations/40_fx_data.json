@@ -1,0 +1,981 @@
+{
+ "disasm": [
+  "0x2284",
+  "0x2288",
+  "0x228c",
+  "0x2290",
+  "0x2294",
+  "0x2298",
+  "0x229c",
+  "0x22a0",
+  "0x22a4",
+  "0x22a8",
+  "0x22ac",
+  "0x22b0",
+  "0x22b4",
+  "0x22b8",
+  "0x22bc",
+  "0x22c0"
+ ],
+ "labels": [
+  {
+   "addr": "0xc0",
+   "name": "drv_layout_table",
+   "type": "uint[8]",
+   "comment": "work areas published to the SH-4: 0x13F00 fx/ext block, 0x13600 port status, 0x13400 system block, 0x14000 bank table, 0x13200 host cmd slots, 0x14800 cmd log, 0x13E00, 0x100 (?)"
+  },
+  {
+   "addr": "0x28dc",
+   "name": "lit_pool_28dc",
+   "comment": "literal pool of midi_event_dispatch (0x28C8-0x28DB before it is an unreferenced code fragment)"
+  },
+  {
+   "addr": "0x2908",
+   "name": "builtin_sfpb",
+   "type": "FxBankHeader",
+   "comment": "built-in SFPB (1 program), default of fx_prg_bank (0x14200)"
+  },
+  {
+   "addr": "0x291c",
+   "name": "builtin_fxprg_ereverb",
+   "type": "FxProgram",
+   "comment": "SFPB program 0 'e-reverb': rb_size 3 (128 KB ring), 90-step MPRO"
+  },
+  {
+   "addr": "0x355c",
+   "name": "builtin_sfpb_endb",
+   "type": "char[4]"
+  },
+  {
+   "addr": "0x3560",
+   "name": "builtin_sfpb_size",
+   "type": "uint",
+   "comment": "0xC58 -> 0x14204"
+  },
+  {
+   "addr": "0x3564",
+   "name": "note_oct_tab",
+   "type": "byte[228]",
+   "comment": "(note+0x60-root) -> OCT<<4 | semitone; 0x7F = out of range"
+  },
+  {
+   "addr": "0x3648",
+   "name": "fns_lo_tab",
+   "type": "byte[1536]",
+   "comment": "semitone*128+fine -> FNS[7:0]; +0x100 per threshold 0x1EF/0x383/0x4D9"
+  },
+  {
+   "addr": "0x3c48",
+   "name": "fx_pan_coef_tab",
+   "type": "uint[128]",
+   "comment": "32 x 4 DSP COEF values (13-bit<<3): pan-matrix presets, roughly equal-power, not exactly symmetric (index = 7-bit value >> 2)"
+  },
+  {
+   "addr": "0x3e48",
+   "name": "builtin_smpb0",
+   "type": "uint[8]",
+   "comment": "built-in SMPB tone bank (2 programs), default bank of every MIDI channel"
+  },
+  {
+   "addr": "0x3f28",
+   "name": "builtin_vol_curve",
+   "type": "byte[128]",
+   "comment": "builtin_smpb0 velocity curve 0; also used directly as the CC7 x CC11 volume curve"
+  },
+  {
+   "addr": "0x3fa8",
+   "name": "builtin_wave_square16",
+   "type": "ushort[98]",
+   "comment": "16-bit PCM square wave (SMPB0 program 0 sample, SA offset 0x160, LEA 0x54)"
+  },
+  {
+   "addr": "0x406c",
+   "name": "builtin_wave_saw8",
+   "type": "byte[176]",
+   "comment": "8-bit PCM sawtooth (SMPB0 program 1 sample, SA offset 0x224, LEA 0xA9)"
+  },
+  {
+   "addr": "0x411c",
+   "name": "builtin_smpb0_endb",
+   "type": "char[4]"
+  },
+  {
+   "addr": "0x4120",
+   "name": "builtin_smpb0_size",
+   "type": "uint",
+   "comment": "0x2D8"
+  },
+  {
+   "addr": "0x4124",
+   "name": "builtin_smpb1",
+   "type": "uint[8]",
+   "comment": "built-in SMPB drum kit: 1 split (+0x58) using the AICA noise generator (SSCTL); -> 0x14290/0x14298 (program-bank entries 66/67)"
+  },
+  {
+   "addr": "0x41ac",
+   "name": "builtin_smpb1_curve",
+   "type": "byte[128]"
+  },
+  {
+   "addr": "0x422c",
+   "name": "builtin_smpb1_endb",
+   "type": "char[4]"
+  },
+  {
+   "addr": "0x4230",
+   "name": "builtin_smpb1_size",
+   "type": "uint",
+   "comment": "0x10C -> 0x14294/0x1429C"
+  },
+  {
+   "addr": "0x4234",
+   "name": "builtin_sfob",
+   "type": "FxBankHeader",
+   "comment": "built-in SFOB (1 output set), default of fx_out_bank (0x14280)"
+  },
+  {
+   "addr": "0x4248",
+   "name": "builtin_sfob_set0",
+   "type": "FxOutSet",
+   "comment": "EFREG0 lev 15 pan 0x1F (left), EFREG1 lev 15 pan 0x0F (right), others off"
+  },
+  {
+   "addr": "0x4268",
+   "name": "builtin_sfob_endb",
+   "type": "char[4]"
+  },
+  {
+   "addr": "0x426c",
+   "name": "builtin_sfob_size",
+   "type": "uint",
+   "comment": "0x38 -> 0x14284"
+  },
+  {
+   "addr": "0x45cc",
+   "name": "seq_jt_45cc",
+   "comment": "7 code pointers, jump table of the sequencer (0x45C0)"
+  },
+  {
+   "addr": "0x4650",
+   "name": "seq_cmd_jt",
+   "comment": "16 code pointers, sequencer event 0x80..0x8F dispatch (0x4638)"
+  },
+  {
+   "addr": "0x47a4",
+   "name": "seq_len_mul_a",
+   "type": "uint[4]",
+   "comment": "{0x200,0x800,0x1000,0x2000} by (op&3) -> track +0x2C"
+  },
+  {
+   "addr": "0x47b4",
+   "name": "seq_len_mul_b",
+   "type": "uint[4]",
+   "comment": "{0x100,0x200,0x800,0x1000} by (op&3) -> track +0x28"
+  },
+  {
+   "addr": "0x5d98",
+   "name": "k_sfpb_magic",
+   "comment": "'SFPB'"
+  },
+  {
+   "addr": "0x5da0",
+   "name": "fx_rb_need_tab",
+   "type": "uint[4]",
+   "comment": "minimum accepted SFPW size per rb_size code (16/32/64/128 KB minus 1): fx_prg_select errors if size < entry"
+  },
+  {
+   "addr": "0x5dc8",
+   "name": "fx_prg_sel",
+   "type": "byte",
+   "comment": "program number accepted by fx_prg_select; copied to fx_prg_cur on load"
+  },
+  {
+   "addr": "0x858",
+   "name": "fx_rb_dirty",
+   "type": "uint",
+   "comment": "0xFF: RBP changed, RINGBUF must be rewritten"
+  },
+  {
+   "addr": "0x5bd0",
+   "name": "k_sfob_magic",
+   "comment": "'SFOB'"
+  },
+  {
+   "addr": "0x63f4",
+   "name": "fx_out_save",
+   "type": "uint[16]",
+   "comment": "EFSDL/EFPAN of the 16 DSP outputs saved by fx_out_fade_out"
+  },
+  {
+   "addr": "0x7310",
+   "name": "pan_aica_to_lin_a",
+   "type": "byte[32]",
+   "comment": "AICA pan code -> linear 0..31 (0x10 centre)"
+  },
+  {
+   "addr": "0x7330",
+   "name": "pan_lin_to_aica_a",
+   "type": "byte[32]",
+   "comment": "linear 0..31 -> AICA pan code"
+  },
+  {
+   "addr": "0x7cd4",
+   "name": "pan_lin_to_aica_b",
+   "type": "byte[32]",
+   "comment": "duplicate of pan_lin_to_aica_a"
+  },
+  {
+   "addr": "0x7cf4",
+   "name": "pan_aica_to_lin_b",
+   "type": "byte[32]",
+   "comment": "duplicate of pan_aica_to_lin_a"
+  },
+  {
+   "addr": "0x7e38",
+   "name": "oct_flip_tab",
+   "type": "byte[16]",
+   "comment": "OCT nibble ^ 8 (two's complement <-> offset binary)"
+  },
+  {
+   "addr": "0x8298",
+   "name": "jt_828c",
+   "comment": "4 code pointers for the switch at 0x828C"
+  },
+  {
+   "addr": "0x82e4",
+   "name": "image_pad",
+   "type": "byte[28]",
+   "comment": "0xFF fill to the end of the image (0x8300)"
+  },
+  {
+   "addr": "0x13008",
+   "name": "fx_out_table",
+   "type": "FxOutEntry *",
+   "comment": "SFOB base + offset[0] (FxOutSet[])"
+  },
+  {
+   "addr": "0x1300c",
+   "name": "fx_prg_pending",
+   "type": "FxProgram *",
+   "comment": "FxProgram * queued by fx_prg_select"
+  },
+  {
+   "addr": "0x13010",
+   "name": "fx_rb_pending",
+   "type": "uint",
+   "comment": "RINGBUF value for the queued program"
+  },
+  {
+   "addr": "0x13014",
+   "name": "fx_load_req",
+   "type": "byte",
+   "comment": "1: fx_prg_load_service loads fx_prg_pending"
+  },
+  {
+   "addr": "0x13404",
+   "name": "mono_flag",
+   "type": "uint",
+   "comment": "host 0x8A: -1 = mono (MVOL bit15, volume clamped to 13)"
+  },
+  {
+   "addr": "0x13420",
+   "name": "drv_err",
+   "type": "byte",
+   "comment": "error bits 1 no-download 2 id 4 end-id 8 version 0x10 number (SDK SDD_DRV_ERR_* >> 3)"
+  },
+  {
+   "addr": "0x13450",
+   "name": "fx_out_prm",
+   "type": "byte[32]",
+   "comment": "16 x {lev ofs, pan ofs} (s8) from host 0x83"
+  },
+  {
+   "addr": "0x13474",
+   "name": "fx_prg_cur",
+   "type": "byte",
+   "comment": "loaded FX program, 0xFF = none"
+  },
+  {
+   "addr": "0x13475",
+   "name": "fx_out_cur",
+   "type": "byte",
+   "comment": "selected SFOB output set"
+  },
+  {
+   "addr": "0x13476",
+   "name": "fx_busy",
+   "type": "byte",
+   "comment": "0xFF while fx_prg_load_service runs"
+  },
+  {
+   "addr": "0x13f00",
+   "name": "fx_ext_req",
+   "type": "byte"
+  },
+  {
+   "addr": "0x13f01",
+   "name": "fx_ext_active",
+   "type": "byte",
+   "comment": "0xFF: DSP under external control, loader/ringbuf update suspended"
+  },
+  {
+   "addr": "0x13f04",
+   "name": "fx_dsp_reg_base",
+   "type": "uint",
+   "comment": "0x803000"
+  },
+  {
+   "addr": "0x13f08",
+   "name": "fx_dsp_reg_size",
+   "type": "uint",
+   "comment": "0xC00"
+  },
+  {
+   "addr": "0x13f0c",
+   "name": "fx_wrk_size_pub",
+   "type": "uint"
+  },
+  {
+   "addr": "0x13f10",
+   "name": "fx_ringbuf_reg",
+   "type": "uint",
+   "comment": "shadow of AICA_RINGBUF"
+  },
+  {
+   "addr": "0x13f1c",
+   "name": "fx_prg_b22",
+   "type": "byte"
+  },
+  {
+   "addr": "0x13f1d",
+   "name": "fx_pan_mode",
+   "type": "byte",
+   "comment": "bit4: 8 pan slots, bit5: 4 pan slots"
+  },
+  {
+   "addr": "0x13f1e",
+   "name": "fx_pan_coef_base",
+   "type": "byte"
+  },
+  {
+   "addr": "0x13f80",
+   "name": "ext_req2",
+   "type": "byte"
+  },
+  {
+   "addr": "0x13f81",
+   "name": "ext_ack2",
+   "type": "byte"
+  },
+  {
+   "addr": "0x13f94",
+   "name": "ext_req3",
+   "type": "byte"
+  },
+  {
+   "addr": "0x13f95",
+   "name": "ext_ack3",
+   "type": "byte"
+  },
+  {
+   "addr": "0x14000",
+   "name": "bank_smsb",
+   "comment": "{addr,size} x 16 MIDI sequence banks"
+  },
+  {
+   "addr": "0x14080",
+   "name": "bank_smpb",
+   "comment": "{addr,size} x N MIDI program (tone) banks; entries 66/67 = drum kits (0x14290/0x14298)"
+  },
+  {
+   "addr": "0x14100",
+   "name": "bank_sosb",
+   "comment": "{addr,size} one-shot banks"
+  },
+  {
+   "addr": "0x14180",
+   "name": "bank_spsr",
+   "comment": "{addr,size} PCM stream ring buffers"
+  },
+  {
+   "addr": "0x14200",
+   "name": "fx_prg_bank",
+   "type": "uint[2]",
+   "comment": "SFPB {addr,size}"
+  },
+  {
+   "addr": "0x14280",
+   "name": "fx_out_bank",
+   "type": "uint[2]",
+   "comment": "SFOB {addr,size}"
+  },
+  {
+   "addr": "0x14288",
+   "name": "fx_wrk",
+   "type": "uint[2]",
+   "comment": "SFPW {addr,size} = DSP ring buffer"
+  },
+  {
+   "addr": "0x14290",
+   "name": "drum_kit_bank",
+   "type": "uint[4]",
+   "comment": "SMPB entries 66/67 (drum kits), default builtin_smpb1"
+  },
+  {
+   "addr": "0x5c94",
+   "name": "fx_cmd_set_prg",
+   "comment": "host 0x84 (sdSndSetFxPrg): prg = cmd[2], falls into fx_prg_select"
+  },
+  {
+   "addr": "0x6db4",
+   "name": "port_ptr_tab",
+   "type": "uint[16]",
+   "comment": "0xC000 + i*0x80 (PortState pointers; entries 8..15 alias g_midi_ch, unused) - voice_update_4ms"
+  },
+  {
+   "addr": "0x5d9c",
+   "name": "k_endb_magic_5d9c",
+   "comment": "'ENDB'"
+  },
+  {
+   "addr": "0x5bd4",
+   "name": "k_endb_magic_5bd4",
+   "comment": "'ENDB'"
+  },
+  {
+   "addr": "0x6320",
+   "name": "k_dsp_zero2",
+   "comment": "0x60006000: two DSP-float zeros"
+  }
+ ],
+ "functions": [
+  {
+   "addr": "0x694",
+   "name": "fx_status_init",
+   "signature": "void fx_status_init(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Boot: publishes the DSP register window in the 0x13F00 block: fx_dsp_reg_base=0x803000, fx_dsp_reg_size=0xC00 (COEF..MPRO), fx_ringbuf_reg=(SFPW addr>>11)&0xFFF (0 at boot).\nDoes not write AICA_RINGBUF (was provisionally fx_init_ringbuf)."
+  },
+  {
+   "addr": "0x6d4",
+   "name": "fx_ext_flags_update",
+   "signature": "void fx_ext_flags_update(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Every 4 ms: fx_ext_active(0x13F01) = (fx_ext_req && SFPW addr) ? 0xFF : 0; ext_ack2(0x13F81) = ext_req2 ? 0xFF:0; ext_ack3(0x13F95) = ext_req3 ? 0xFF:0.\nfx_ext_active suspends fx_update_ringbuf and fx_prg_load_service (external DSP control). Writer of the request bytes unknown (not the R9 sd library)."
+  },
+  {
+   "addr": "0x76c",
+   "name": "fx_update_ringbuf",
+   "signature": "void fx_update_ringbuf(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Every 4 ms unless fx_ext_active: if SFPW addr >= 0x18000, RINGBUF = RBP(addr>>11) | RBL(size: >=128K 3, >=64K 2, >=32K 1, else 0)<<13, written only when changed (shadow fx_ringbuf_reg 0x13F10, dirty flag at 0x858); then fx_wrk_size_pub = size.\nThe address test is 'cmp; movmi' (N flag of addr-0x18000 only). RBL looks only at size bits 15..21.\nQuirk: RBL comes from the SFPW size and overrides the program's rb_size one tick after a load.",
+   "locals": {
+    "@r2:0x798": "v"
+   }
+  },
+  {
+   "addr": "0x5a8c",
+   "name": "fx_cmd_set_out",
+   "signature": "uint fx_cmd_set_out(HostCmd * cmd)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x82 (sdSndSetFxOut, 2nd half of sdSndSetFxPrg): cmd[2] = SFOB output set.\nValidates SFOB at 0x14280 ('SFOB' else err 2, version 1 else 8, 'ENDB' else 4, n<count else 0x10), sets fx_out_cur/fx_out_table and writes EFSDL/EFPAN of the 16 DSP outputs = set entry + host offsets (0x13450).\nQuirks: only the low byte of offset[0] is used; no NULL check of the bank.",
+   "params": [
+    {
+     "name": "cmd",
+     "type": "HostCmd *",
+     "reg": "r10"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@r0:0x5b14": "ent",
+    "@r5:0x5b1c": "ent_pan",
+    "@r1:0x5aa4": "lev",
+    "@r2:0x5b14": "out_reg",
+    "@r3:0x5b48": "pan",
+    "@r4:0x5b0c": "i",
+    "@r5:0x5b10": "prm",
+    "@r7:0x5b68": "pan_sum",
+    "@HASH:5f25581b2b:0x5a8c|bVar1": "num",
+    "@HASH:27ffc145716:0x5b14|puVar2": "prm_pan"
+   }
+  },
+  {
+   "addr": "0x5bd8",
+   "name": "fx_cmd_set_out_prm",
+   "signature": "uint fx_cmd_set_out_prm(HostCmd * cmd)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x83 (sdSndSetFxOutPrm): cmd[2]&15 = output, cmd[3] = lev ofs+0x80, cmd[4] = pan ofs+0x80. Stores the offsets in 0x13450[n] and rewrites output n.\nQuirks: uses set 0 (fx_out_table + n*2) regardless of fx_out_cur; if no set was selected yet returns n without storing.",
+   "params": [
+    {
+     "name": "cmd",
+     "type": "HostCmd *",
+     "reg": "r10"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@r5:0x5c3c": "pan",
+    "@r4:0x5c00": "ent",
+    "@r0:0x5bdc": "n",
+    "@r0:0x5c08": "ofs",
+    "@r0:0x5c18": "lev"
+   }
+  },
+  {
+   "addr": "0x5dcc",
+   "name": "fx_prg_clear",
+   "signature": "uint fx_prg_clear(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x85 sdSndClearFxPrg, CC79=0, drv_reset, host 0x80/0x8E/0x8F: fade DSP outputs out, fx_dsp_clear, fx_ringbuf_clear, fade back in. Returns 0.",
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   }
+  },
+  {
+   "addr": "0x5df0",
+   "name": "fx_dsp_clear",
+   "signature": "void fx_dsp_clear(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Zeroes IMXL/ISEL of all 64 channels, MPRO[512], COEF[128], MADRS[64], TEMP[256]; fx_prg_cur(0x13474) = 0xFF.",
+   "locals": {
+    "@r1:0x5e00": "send",
+    "@r1:0x5e54": "reg",
+    "@r2:0x5dfc": "n"
+   }
+  },
+  {
+   "addr": "0x5e70",
+   "name": "host_cmd_push_event",
+   "signature": "uint host_cmd_push_event(HostCmd * cmd)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x86: appends the packed event in cmd bytes 4..7 to the event ring at 0xB000 (no full check). Returns 0.",
+   "params": [
+    {
+     "name": "cmd",
+     "type": "HostCmd *",
+     "reg": "r10"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   }
+  },
+  {
+   "addr": "0x5ea0",
+   "name": "host_cmd_drum_mode",
+   "signature": "uint host_cmd_drum_mode(HostCmd * cmd)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x87 (not sent by the R9 lib): cmd[2] bit0 on/off, cmd[3]&7 port; MIDI ch 10 of the port: drum_kit flag, bank = kit bank 66 (0x14290) or built-in 0x4124, prog/velcurve from the bank.\nBUG: the fallback path computes prog/velcurve from r2 (0 / unsized kit address) instead of 0x4124.",
+   "params": [
+    {
+     "name": "cmd",
+     "type": "HostCmd *",
+     "reg": "r10"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@r0:0x5ec4": "base",
+    "@r0:0x5ee4": "port"
+   }
+  },
+  {
+   "addr": "0x5f54",
+   "name": "fx_cmd_set_dsp_pan",
+   "signature": "uint fx_cmd_set_dsp_pan(HostCmd * cmd)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x88 (not sent by the R9 lib): for programs with pan slots (fx_pan_mode 0x13F1D bit5: 4 slots, else bit4: 8 slots) writes preset (cmd[2+i]>>2)&31 of fx_pan_coef_tab (0x3C48, 4 coefs) to COEF[base+i+k*slots] for every byte with bit7 set.\nSame as CC80 (0x250C) but bit5 has priority here, bit4 there.",
+   "params": [
+    {
+     "name": "cmd",
+     "type": "HostCmd *",
+     "reg": "r10"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@r0:0x5f88": "src",
+    "@r0:0x5f94": "preset4",
+    "@r1:0x5fec": "coef",
+    "@r3:0x5f6c": "n",
+    "@r9:0x5f70": "arg"
+   }
+  },
+  {
+   "addr": "0x6040",
+   "name": "host_cmd_nop89",
+   "signature": "uint host_cmd_nop89(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x89: no-op (returns r0 = table offset 0x24).",
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@r0:0x603f": "tab_ofs"
+   }
+  },
+  {
+   "addr": "0x6044",
+   "name": "host_cmd_mono",
+   "signature": "uint host_cmd_mono(HostCmd * cmd)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x8A (not sent by the R9 lib): cmd[2]==0 stereo: 0x13404=0, MVOL=master_vol; else mono: 0x13404=-1, MVOL=0x8000|min(master_vol,13). Returns 0.",
+   "params": [
+    {
+     "name": "cmd",
+     "type": "HostCmd *",
+     "reg": "r10"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@r0:0x605c": "mono_bit",
+    "@r2:0x6048": "vol"
+   }
+  },
+  {
+   "addr": "0x6094",
+   "name": "host_cmd_reinit",
+   "signature": "uint host_cmd_reinit(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x8E: with FIQ masked re-runs the work-RAM part of drv_reset (silence, clear host area, default banks, event ring, ports, voices, 0x742C, fx_prg_clear). Returns 0.",
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@r0:0x60c0": "ret"
+   }
+  },
+  {
+   "addr": "0x60d8",
+   "name": "host_cmd_reboot",
+   "signature": "void host_cmd_reboot(HostCmd * cmd)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Host 0x8F: only if cmd[4..7]=='SEGA': FIQ off, drv_status=0xFF000000, same reinit as 0x8E, drv_status=0xFFFFFFFF, then spins forever (waits for the SH-4 to stop/reload the ARM).",
+   "params": [
+    {
+     "name": "cmd",
+     "type": "HostCmd *",
+     "reg": "r10"
+    }
+   ]
+  },
+  {
+   "addr": "0x61d4",
+   "name": "fx_prg_load_service",
+   "signature": "void fx_prg_load_service(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Every 4 ms: if !fx_ext_active and fx_load_req: fade out, DSP clear, ring clear, RINGBUF=fx_rb_pending, fx_busy=0xFF, publish 0x13F04/08/10, latch program bytes +0x22/+0x23/+0x24 (0x13F1C/1D/1E), copy 0x300 words program+0x40 -> 0x803000 (COEF, MADRS, gap, MPRO), ring clear, fade in, fx_prg_cur=fx_prg_sel, fx_busy=0.",
+   "locals": {
+    "@r0:0x6294": "src",
+    "@r1:0x6294": "dst",
+    "@r2:0x6290": "n"
+   }
+  },
+  {
+   "addr": "0x62ec",
+   "name": "fx_ringbuf_clear",
+   "signature": "void fx_ringbuf_clear(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Fills the SFPW ring buffer (0x14288 addr, 0x1428C size) with 0x60006000 = 16-bit DSP-float zeros (0x0000 is not zero in that format). Skipped only if addr and size are both 0; size<4 wraps the counter.",
+   "locals": {
+    "@r0:0x6310": "p",
+    "@r1:0x6314": "n"
+   }
+  },
+  {
+   "addr": "0x6328",
+   "name": "fx_out_fade_out",
+   "signature": "void fx_out_fade_out(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Saves the 16 DSP output regs (0x802000..) in fx_out_save (0x63F4), then 16 x (decrement every nonzero EFSDL byte, 255-iteration delay).",
+   "locals": {
+    "@r0:0x6334": "save",
+    "@r1:0x6330": "step",
+    "@r1:0x634c": "i",
+    "@r2:0x6354": "lev",
+    "@r8:0x6334": "reg",
+    "@r8:0x6348": "out"
+   }
+  },
+  {
+   "addr": "0x6388",
+   "name": "fx_out_fade_in",
+   "signature": "void fx_out_fade_in(void)",
+   "confidence": "high",
+   "source": "src/arm/fx.c",
+   "plate": "Restores EFPAN bytes from fx_out_save, then for lev 0..15 sets EFSDL=lev on every output whose saved level >= lev (255-iteration delay per step).",
+   "locals": {
+    "@r0:0x63b0": "save",
+    "@r1:0x6390": "lev",
+    "@r1:0x63b4": "i",
+    "@r4:0x63a8": "step",
+    "@r8:0x63ac": "out"
+   }
+  }
+ ],
+ "comments": [
+  {
+   "addr": "0x6b4",
+   "kind": "eol",
+   "text": "RBP = SFPW addr >> 11 (2 KB units)"
+  },
+  {
+   "addr": "0x7a4",
+   "kind": "eol",
+   "text": "compare with the RBP bits of the shadow"
+  },
+  {
+   "addr": "0x7b8",
+   "kind": "eol",
+   "text": "r4 was already &0xFFF, so this is 0: RBL dropped (restored by the RBL check below)"
+  },
+  {
+   "addr": "0x7cc",
+   "kind": "eol",
+   "text": "size >> 14 = size in 16 KB units -> RBL 0..3"
+  },
+  {
+   "addr": "0x818",
+   "kind": "eol",
+   "text": "nothing changed unless the RBP dirty flag is set"
+  },
+  {
+   "addr": "0x5af0",
+   "kind": "eol",
+   "text": "only the LOW BYTE of offset[0] is used; sets assumed contiguous"
+  },
+  {
+   "addr": "0x5b04",
+   "kind": "eol",
+   "text": "set = fx_out_table + num*0x20"
+  },
+  {
+   "addr": "0x5b30",
+   "kind": "eol",
+   "text": "lev ofs (s8) + EFSDL*8, clamp 0..0x7F"
+  },
+  {
+   "addr": "0x5b40",
+   "kind": "eol",
+   "text": "(l<<5)&0xF00 == (l>>3)<<8 -> EFSDL"
+  },
+  {
+   "addr": "0x5b4c",
+   "kind": "eol",
+   "text": "AICA pan code -> linear 0..31 (0x10 centre)"
+  },
+  {
+   "addr": "0x5b7c",
+   "kind": "eol",
+   "text": "pan ofs (s8) + linear*4, clamp 0..0x7F"
+  },
+  {
+   "addr": "0x5b94",
+   "kind": "eol",
+   "text": "linear -> AICA sign/magnitude pan code"
+  },
+  {
+   "addr": "0x5bfc",
+   "kind": "eol",
+   "text": "no SFOB set selected yet: return r0 = n, offsets not stored"
+  },
+  {
+   "addr": "0x5c00",
+   "kind": "eol",
+   "text": "BUG: set 0 entry n (ignores fx_out_cur)"
+  },
+  {
+   "addr": "0x5ca4",
+   "kind": "eol",
+   "text": "no SFPB downloaded -> built-in bank 0x2908"
+  },
+  {
+   "addr": "0x5cfc",
+   "kind": "eol",
+   "text": "fx_prg_sel = prg (before the SFPW checks)"
+  },
+  {
+   "addr": "0x5d14",
+   "kind": "eol",
+   "text": "r1 = rb_size*4: table index AND later the RBL/'error' value"
+  },
+  {
+   "addr": "0x5d3c",
+   "kind": "eol",
+   "text": "SFPW must be >= 0x18000 (signed test)"
+  },
+  {
+   "addr": "0x5d4c",
+   "kind": "eol",
+   "text": "programs with DSP pan slots need no ring buffer"
+  },
+  {
+   "addr": "0x5d58",
+   "kind": "eol",
+   "text": "BUG: error exit with r1 = rb_size*4 instead of 1"
+  },
+  {
+   "addr": "0x5d68",
+   "kind": "eol",
+   "text": "(rb_size & 3) << 13 = RBL field"
+  },
+  {
+   "addr": "0x5f58",
+   "kind": "eol",
+   "text": "unaligned ldr from 0x13F1D: ARM7 rotates the word at 0x13F1C, low byte = fx_pan_mode"
+  },
+  {
+   "addr": "0x5f64",
+   "kind": "eol",
+   "text": "bit5 (4 slots) has priority here; CC80 at 0x250C prefers bit4 (8 slots)"
+  },
+  {
+   "addr": "0x5f94",
+   "kind": "eol",
+   "text": "preset = (b>>2)&31, 16 bytes each"
+  },
+  {
+   "addr": "0x5f24",
+   "kind": "eol",
+   "text": "common tail uses r2 (kit-66 address), not the bank stored at +0x10"
+  },
+  {
+   "addr": "0x5f48",
+   "kind": "eol",
+   "text": "BUG: stores 0x4124 but the tail at 0x5F24 still uses r2"
+  },
+  {
+   "addr": "0x61f8",
+   "kind": "eol",
+   "text": "32-bit store: clears 0x13014..0x13017"
+  },
+  {
+   "addr": "0x6240",
+   "kind": "eol",
+   "text": "0xC00 bytes = COEF+MADRS+gap+MPRO"
+  },
+  {
+   "addr": "0x6290",
+   "kind": "eol",
+   "text": "0x300 words from program+0x40 to 0x803000"
+  },
+  {
+   "addr": "0x630c",
+   "kind": "eol",
+   "text": "0x60006000 = two 16-bit DSP floats of value 0 (0x0000 would not be 0)"
+  },
+  {
+   "addr": "0x6314",
+   "kind": "eol",
+   "text": "size>>2 == 0 wraps: 2^32 iterations"
+  },
+  {
+   "addr": "0x6350",
+   "kind": "eol",
+   "text": "EFSDL byte (+1 of the DSP output register)"
+  },
+  {
+   "addr": "0x636c",
+   "kind": "eol",
+   "text": "~255 x 3-instruction delay per fade step"
+  },
+  {
+   "addr": "0x6394",
+   "kind": "eol",
+   "text": "restore EFPAN byte only"
+  },
+  {
+   "addr": "0x63bc",
+   "kind": "eol",
+   "text": "EFSDL = step while step <= saved level"
+  },
+  {
+   "addr": "0x6098",
+   "kind": "eol",
+   "text": "mask FIQ (CPSR.F); r10 = cmd pointer is clobbered"
+  },
+  {
+   "addr": "0x60cc",
+   "kind": "eol",
+   "text": "unmask FIQ"
+  },
+  {
+   "addr": "0x611c",
+   "kind": "eol",
+   "text": "drv_status = 0xFF000000 (resetting)"
+  },
+  {
+   "addr": "0x6150",
+   "kind": "eol",
+   "text": "drv_status = 0xFFFFFFFF (halted)"
+  },
+  {
+   "addr": "0x6154",
+   "kind": "eol",
+   "text": "spin forever with FIQ masked: waits for the SH-4 to reset the ARM"
+  },
+  {
+   "addr": "0x5e88",
+   "kind": "eol",
+   "text": "EVQ_MASK 0xFFF, no overflow check"
+  },
+  {
+   "addr": "0x6080",
+   "kind": "eol",
+   "text": "mono: clamp master volume to 13"
+  },
+  {
+   "addr": "0x2284",
+   "kind": "pre",
+   "text": "branch table indexed by MidiChannel.cutoff_range (0x2274): 9 entries + 7 nop padding (disassembled by 40_fx_data.json)"
+  },
+  {
+   "addr": "0x51ec",
+   "kind": "pre",
+   "text": "unreferenced 'mov pc,lr' between literal-pool words"
+  },
+  {
+   "addr": "0x78c",
+   "kind": "eol",
+   "text": "MI only (N flag of addr-0x18000), not a full signed compare"
+  }
+ ]
+}

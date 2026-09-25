@@ -1,0 +1,102 @@
+<!-- title: Bugs, quirks & confidence -->
+<div class="eyebrow">Reference</div>
+<h1>Bugs, quirks &amp; confidence</h1>
+<p class="lead">A faithful decompilation reproduces the original's mistakes. These are the notable ones found in
+this Manatee build (v1.1 build 0x3F), each verified independently against the disassembly. Other builds
+shipped with other games may have fixed some or introduced others.</p>
+
+<h2 id="confidence">How sure is all this?</h2>
+<div class="grid four">
+  <div class="card tile"><div class="val">185</div><div class="lbl">routines named in Ghidra</div></div>
+  <div class="card tile"><div class="val">180 / 181</div><div class="lbl">C functions rated high confidence</div></div>
+  <div class="card tile"><div class="val">2 passes</div><div class="lbl">author + independent reviewer per file</div></div>
+  <div class="card tile"><div class="val">0</div><div class="lbl">unresolved symbols when linked</div></div>
+</div>
+<p>Every routine of the driver was rewritten as C, then a second, independent reviewer re-derived each one
+path by path from the ARM disassembly (conditional execution, flags, byte vs word accesses, fallthroughs) and
+fixed discrepancies. "High" means every path was checked. The one medium-rated function is an unreferenced
+alternate entry point into the controller-reset code. The C compiles for ARMv4 and links as a whole.</p>
+<div class="callout note">
+  <div class="title">What the decompilation does not establish</div>
+  <p>Hardware behaviour beyond what the code shows (for example why the interrupt-clear register is written
+  several times, or how the MIDI-in interrupt is released without an explicit acknowledge) is general AICA
+  knowledge or inference. Who writes the driver's "external FX request" block is unknown (nothing in the
+  game's sound library does). How Soul Calibur <em>uses</em> the driver (which songs, which reverb when) is
+  SH-4 game code and was not traced.</p>
+</div>
+
+<h2 id="serious">Bugs that can misbehave badly</h2>
+<div class="tablewrap"><table>
+  <tr><th>Where</th><th>What happens</th><th>When</th></tr>
+  <tr><td>MIDI voice allocation</td><td>If every voice has a higher priority than the new note, the allocator
+  reads two of its own instruction words as the "chosen" voice and reports success; note-on then writes AICA
+  settings to garbage addresses. The intended "no voice" result can never happen.</td><td>all 48 voices busy
+  with higher-priority notes</td></tr>
+  <tr><td>PCM slot stealing</td><td>When a one-shot or stream steals a slot found by the priority scan, the
+  loop counter (-1) is stored as the slot number. Later lookups index 255 entries past the slot table and the
+  monitor ends up watching a MIDI voice's channel.</td><td>16 PCM slots busy, new sound outranks one</td></tr>
+  <tr><td>Sequencer overload</td><td>If both the pending note-off queue and the overflow queue are full, the
+  steal path leaves a value on the stack and "returns" to a low address: the reset vector (ports 0-3) or the
+  undefined-instruction vector (ports 4-7).</td><td>extreme note density</td></tr>
+  <tr><td>Sequencer stall</td><td>If the event ring fills while a port is processing a zero-delay event, the
+  port's delay counter goes negative and is compared unsigned: that port stops for about 17 minutes.</td><td>event ring full</td></tr>
+  <tr><td>Drum-mode command</td><td>If the drum-kit bank is missing, the fallback installs the built-in kit but
+  computes the program and velocity-curve pointers from a stale register.</td><td>drum mode without the bank downloaded</td></tr>
+</table></div>
+
+<h2 id="wrong-results">Wrong results and reporting</h2>
+<ul>
+  <li><strong>FX program with a too-small ring buffer</strong> reports the ring-size code times four (0, 4, 8 or
+  12) as the error instead of "not downloaded": the error is lost or looks like a different one.</li>
+  <li><strong>Current FX program readback</strong>: the driver stores the current program and output set at one
+  address, while the version of the SH-4 library in the game reads another, so <code>sdSndGetFxPrg</code> does not
+  see what the driver loaded.</li>
+  <li><strong>Command log</strong>: empty slots also write a result, so the last command of each batch has its
+  logged result overwritten (nothing reads the log).</li>
+  <li><strong>Stream position for 8-bit streams</strong> is reported as "start + 1" instead of the real position.</li>
+  <li><strong>One-shot numbers</strong>: the entry count check is off by one, so number = count is accepted and
+  reads a tag as an offset.</li>
+</ul>
+
+<h2 id="midi-quirks">MIDI engine quirks</h2>
+<ul>
+  <li><strong>RPN numbers are never compared.</strong> Any RPN data entry sets the pitch-bend range.</li>
+  <li><strong>Data increment</strong> (CC 96) on an RPN depends on a CPU flag left over from reading the event
+  ring: normally it sets the bend range straight to the maximum.</li>
+  <li><strong>Data decrement</strong> (CC 97) on an RPN decrements the NRPN value instead.</li>
+  <li><strong>Reverb send 0</strong> (CC 91 = 0) mutes live voices' sends rather than restoring the tone's
+  default, and drops a CC 76 input-bus override.</li>
+  <li><strong>Sustain pedal</strong> key-offs also clear the sample-source bit of the channel; reset-all uses a
+  different mask that keeps it.</li>
+  <li><strong>Envelope offsets</strong>: the second decay rate is offset by the first-decay controller; one
+  stored controller (CC 90) is never used.</li>
+  <li><strong>A layer with zero splits</strong> would make note-on scan 2<sup>32</sup> splits.</li>
+  <li><strong>Program change</strong> ignores drum mode and can replace a drum-kit selection.</li>
+</ul>
+
+<h2 id="fade-quirks">Fades and players</h2>
+<ul>
+  <li>The port <strong>pan fade</strong> raises the "volume changed" flag instead of "pan changed".</li>
+  <li>Downward <strong>port pitch</strong> and <strong>PCM speed</strong> fades jump straight to the target
+  (an inverted condition); PCM volume and pan fades can wrap below zero for a tick.</li>
+  <li>The <strong>PCM speed/pitch</strong> fade-step calculation uses an inverted loop test.</li>
+  <li><strong>Stereo streams</strong>: mono play on a port whose right channel still plays leaves its "playing"
+  flag set; a missing right-channel ring leaves the left channel armed but not started, so the next key-on of
+  <em>any</em> channel starts it.</li>
+  <li><strong>Parameter resets</strong> zero the effect-send level (a value is shifted twice); the one-shot
+  "reset all" also resets the stream players.</li>
+</ul>
+
+<h2 id="small">Smaller oddities</h2>
+<ul>
+  <li>Undefined-instruction and SWI exceptions return to the same instruction, looping forever; data aborts
+  skip the faulting instruction.</li>
+  <li>The MIDI input parser treats the byte after an MTC quarter-frame (F1) as running-status data.</li>
+  <li>The sequencer "purge" loop in the tick routine is unreachable; the external MIDI path and the main loop
+  append to the event ring without locking.</li>
+  <li>A few words of dead code, unreferenced literals and NOP padding remain in the image.</li>
+</ul>
+
+<h2 id="more">Where to read more</h2>
+<p>Every item above is commented at the place it occurs in <code>src/arm/*.c</code> and in the Ghidra project;
+<code>docs/HOW_IT_WORKS.md</code> and <code>docs/notes/*.md</code> have the full formats.</p>

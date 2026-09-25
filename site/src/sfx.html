@@ -1,0 +1,121 @@
+<!-- title: One-shots & PCM streams -->
+<div class="eyebrow">The Manatee driver</div>
+<h1>One-shots &amp; PCM streams</h1>
+<p class="lead">Sound effects, voices and streamed music bypass the MIDI engine entirely. They play on the 16
+AICA channels the MIDI engine never touches, through two simpler player types.</p>
+
+<h2 id="slots">Sixteen channels, shared by priority</h2>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 170" role="img" aria-label="PCM slot pool">
+    <g font-size="11.5">
+      <rect class="aica" x="20" y="40" width="48" height="44" rx="6"/><text x="30" y="67">48</text>
+      <rect class="aica" x="72" y="40" width="48" height="44" rx="6"/><text x="82" y="67">49</text>
+      <rect class="arm" x="124" y="40" width="48" height="44" rx="6"/><text x="134" y="67">50</text>
+      <rect class="arm" x="176" y="40" width="48" height="44" rx="6"/><text x="186" y="67">51</text>
+      <rect class="aica" x="228" y="40" width="48" height="44" rx="6"/><text x="238" y="67">52</text>
+      <rect class="box-soft" x="280" y="40" width="48" height="44" rx="6"/><text x="290" y="67" class="t-muted">53</text>
+      <rect class="aica" x="332" y="40" width="48" height="44" rx="6"/><text x="342" y="67">54</text>
+      <rect class="box-soft" x="384" y="40" width="48" height="44" rx="6"/><text x="394" y="67" class="t-muted">55</text>
+      <rect class="box-soft" x="436" y="40" width="48" height="44" rx="6"/><text x="446" y="67" class="t-muted">56</text>
+      <rect class="aica" x="488" y="40" width="48" height="44" rx="6"/><text x="498" y="67">57</text>
+      <rect class="box-soft" x="540" y="40" width="48" height="44" rx="6"/><text x="550" y="67" class="t-muted">58</text>
+      <rect class="box-soft" x="592" y="40" width="48" height="44" rx="6"/><text x="602" y="67" class="t-muted">59</text>
+      <rect class="box-soft" x="644" y="40" width="48" height="44" rx="6"/><text x="654" y="67" class="t-muted">60</text>
+      <rect class="box-soft" x="696" y="40" width="48" height="44" rx="6"/><text x="706" y="67" class="t-muted">61</text>
+      <rect class="box-soft" x="748" y="40" width="48" height="44" rx="6"/><text x="758" y="67" class="t-muted">62</text>
+      <rect class="box-soft" x="800" y="40" width="48" height="44" rx="6"/><text x="810" y="67" class="t-muted">63</text>
+    </g>
+    <text x="20" y="28" font-size="13" font-weight="650">AICA channels 48-63 (an example moment)</text>
+    <rect class="aica" x="20" y="110" width="14" height="14" rx="3"/><text x="40" y="122" font-size="12.5" class="t-sec">one-shot playing</text>
+    <rect class="arm" x="170" y="110" width="14" height="14" rx="3"/><text x="190" y="122" font-size="12.5" class="t-sec">stereo stream (left + right, started together)</text>
+    <rect class="box-soft" x="480" y="110" width="14" height="14" rx="3"/><text x="500" y="122" font-size="12.5" class="t-sec">free</text>
+    <text x="20" y="152" font-size="12" class="t-muted">Each slot records its owner, what kind of player it is and the owner's priority; a new sound may take the slot of a lower-priority one.</text>
+  </svg>
+  </div>
+</figure>
+<p>There are <strong>8 one-shot ports</strong> and <strong>4 stream ports</strong> (each mono or stereo), but
+only 16 channels. A player asks for a slot when it starts: a free slot is taken, or a lower-priority owner
+is evicted; a player that already owns a slot reuses it.</p>
+
+<h2 id="one-shots">One-shots</h2>
+<p>A one-shot bank (tagged <code>SOSB</code>) is a list of entries, each a <strong>ready-made AICA channel
+register image</strong>: sample address and format, loop points, envelope, filter, LFO, pan, sends and level,
+plus a loop count. Nothing is computed from musical parameters; the sound designer's settings go straight to
+the hardware.</p>
+<ol class="steps">
+  <li><strong>Play</strong><code>sdShotPlay(port, bank, number, priority)</code>: the bank is validated, a
+  slot is obtained, the entry is copied into the channel (with the sample address relocated), the port's
+  volume, pan, pitch and send levels are applied, and the channel is keyed on.</li>
+  <li><strong>While playing</strong>Every 4 ms the player looks at its channel through the monitor: it runs
+  volume/pan/pitch/speed fades, counts passes through the loop, and when the loop count is used up (or a
+  non-looping sample ends) it keys the channel off and frees the slot.</li>
+  <li><strong>Control</strong>Stop, pause/continue, volume, pan, pitch, speed (all with fades), effect bus and
+  level, direct level, and a loop-count mode (add to, scale or replace the sample's own count).</li>
+  <li><strong>Status</strong>The port's status record reports whether it is playing, its levels, the number of
+  samples played and the current play position.</li>
+</ol>
+<div class="callout note">
+  <div class="title">In Soul Calibur</div>
+  <p>The game's initial data carries two one-shot banks with 61 and 53 entries, all 4-bit ADPCM and none
+  looping, which suits short effects and voice clips (which sound is which was not catalogued here).</p>
+</div>
+
+<h2 id="streams">PCM streams</h2>
+<p>Music too long to keep in 2 MB is <strong>streamed</strong>: the SH-4 reads it from disc and keeps
+refilling a <strong>ring buffer</strong> in sound RAM while the AICA plays it.</p>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 250" role="img" aria-label="Stream ring buffer">
+    <defs>
+      <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <circle cx="190" cy="125" r="92" style="fill:none; stroke: var(--c-mem); stroke-width: 26; opacity:.35"/>
+    <path d="M190 33 A92 92 0 0 1 282 125" style="fill:none; stroke: var(--c-host); stroke-width: 26"/>
+    <path d="M282 125 A92 92 0 0 1 125 190" style="fill:none; stroke: var(--c-aica); stroke-width: 26; opacity:.85"/>
+    <text x="150" y="120" font-size="13" font-weight="700">ring buffer</text>
+    <text x="150" y="138" font-size="12" class="t-sec">in sound RAM</text>
+    <g data-tip="Play position|The AICA channel loops over the whole ring. The driver reports its position to the SH-4 every 4 ms.">
+      <circle cx="125" cy="190" r="8" style="fill: var(--c-aica)"/></g>
+    <text x="50" y="236" font-size="12" class="t-sec">AICA play position</text>
+    <g data-tip="Write position|The SH-4 writes new data behind the play position, into the part that has already been played.">
+      <circle cx="190" cy="33" r="8" style="fill: var(--c-host)"/></g>
+    <text x="206" y="22" font-size="12" class="t-sec">SH-4 refills here</text>
+    <g font-size="13">
+      <rect class="host" x="400" y="30" width="440" height="56" rx="8"/>
+      <text x="416" y="54" font-weight="650">SH-4 (game / sd library)</text>
+      <text x="416" y="74" class="t-sec" font-size="12">reads the file from disc, writes fresh blocks into the ring</text>
+      <rect class="arm" x="400" y="100" width="440" height="56" rx="8"/>
+      <text x="416" y="124" font-weight="650">Manatee</text>
+      <text x="416" y="144" class="t-sec" font-size="12">programs a looping channel over the whole ring, reports the position</text>
+      <rect class="aica" x="400" y="170" width="440" height="56" rx="8"/>
+      <text x="416" y="194" font-weight="650">AICA channel</text>
+      <text x="416" y="214" class="t-sec" font-size="12">plays round and round; never knows it is a stream</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption><b>Figure 2.</b> Streaming is a looping sample whose contents the SH-4 keeps replacing just
+  behind the play position.</figcaption>
+</figure>
+<ul>
+  <li><strong>Setup</strong> The game allocates the ring(s) in sound RAM and records them in the bank table;
+  <code>sdPstmPlay</code> passes the sample format (16-bit, 8-bit or ADPCM), the frequency, mono or stereo, a
+  base volume and the priority. ADPCM streams use the AICA's special long-stream mode.</li>
+  <li><strong>Stereo</strong> Left and right are two channels on two rings. The driver programs both and then
+  executes the key-on once, so they start on exactly the same sample and stay in lock-step.</li>
+  <li><strong>Position</strong> Every 4 ms the driver reads the channel's current address through the monitor,
+  counts ring wraps, and publishes the position in the port's status record. The SH-4 uses that to decide how
+  much it can safely overwrite.</li>
+  <li><strong>Control</strong> Volume, pan (per channel), pitch and speed with fades, effect send and direct
+  level, stop and reset.</li>
+</ul>
+<p>The game's music files (raw 16-, 8- and 4-bit left/right pairs such as <code>*.P16</code>) are exactly
+the kind of data these stream ports play; how the game schedules the disc reads is SH-4 code outside the
+driver.</p>
+
+<h2 id="fades">Fades everywhere</h2>
+<p>All players share one idea: the game sends a <em>target</em> and a <em>time</em>, and the driver moves the
+value there itself, 4 ms at a time. That keeps the SH-4's work to one command per fade and makes fades smooth
+regardless of the game's frame rate. The one-shot and stream fades are implemented separately from the MIDI
+port fades, and their arithmetic differs in small ways (see the <a href="quirks.html">quirks page</a>).</p>

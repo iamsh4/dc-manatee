@@ -1,0 +1,1319 @@
+{
+ "disasm": [
+  "0x42f0",
+  "0x485c"
+ ],
+ "flow_overrides": [
+  {
+   "addr": "0x730c",
+   "type": "CALL_RETURN"
+  }
+ ],
+ "functions": [
+  {
+   "addr": "0x4270",
+   "name": "seq_tick",
+   "signature": "void seq_tick(void)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "Every 4 ms. Nothing while g_seq.stalled == 1.\n1) 48 pending note-offs (SeqNote @0x10300) of non-paused ports: time -= tempo_scale; expired -> note-off pushed to the event ring and entry freed. Entries with bit24 (SEQ_NOTE_RETRIGGER, set by seq_continue when the ring was full) first push their note-on, then become plain note-offs (dropped if they expire first).\n2) Sequence players g_seq.resume_port..7 with state == 1 (paused skipped): beat counter, delta countdown, then parse events until the next non-zero delta (format: docs/notes/sequence_format.md). Notes (b<0x80) push a note-on and queue the note-off with its gate time; channel messages 0xA0-0xEF are pushed; metas 0x81 call, 0x82 loop, 0x83 end, 0x84 tempo, 0x88-0x8F long gate/delta prefixes.\nRing full: error 0x20, resume at this port next tick. Overflow queue 0x10210 (60 words) holds stolen note-offs / events that did not fit; full -> stalled=1, error 0x60.\nNOTE: seq_evq_push (0x4900) returns to lr on FULL and to lr+4 on success; the success paths 0x42F0 and 0x485C are only reached that way (Ghidra's decompilation shows only the full path).\nAll paths (both jump tables 0x45CC/0x4650) verified against the asm.\nQUIRKS: see src/arm/sequencer.c (delta countdown test is unsigned: a negative delta stored by the ring-full exit sleeps ~2^32/tempo_scale ticks; steal picks the first prio-0 entry, else the LAST lowest-priority entry; stack imbalance when both queues are full -> returns to address <port>; event dropped when ring full and overflow queue empty; '>' vs '>=' wrap of the overflow pointers; unreachable purge loop at 0x4360).",
+   "params": [],
+   "locals": {
+    "@r12:0x4384": "ptr",
+    "@r2:0x42d8": "t",
+    "@unique:4600:0x42b4": "hi",
+    "@unique:4600:0x4520": "pr",
+    "@unique:23800:0x43c4": "cnt",
+    "@unique:23800:0x4468": "vel",
+    "@unique:23800:0x44b0": "dhi",
+    "@r0:0x4358": "opb",
+    "@r0:0x4390": "new_ev",
+    "@r0:0x450c": "q",
+    "@r0:0x4898": "ovp",
+    "@r1:0x46cc": "b1",
+    "@r1:0x4288": "i",
+    "@r1:0x4484": "gn",
+    "@r2:0x4398": "held",
+    "@r4:0x42a0": "op",
+    "@r5:0x42a4": "d",
+    "@r12:0x46c8": "evp",
+    "@r8:0x4518": "best_age",
+    "@r10:0x4374": "port",
+    "@r12:0x4600": "dp",
+    "@r0:0x4284": "note"
+   }
+  },
+  {
+   "addr": "0x48d4",
+   "name": "seq_add_delta",
+   "signature": "int seq_add_delta(SeqPlayer * p, uint d, byte * ptr)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "delta = d*tick_len + delta_extra + delta (the <=0 remainder); delta_extra = 0; cur = ptr. Returns the new delta in r3.\nThe mlas/mvnvs saturation is dead code (MLAS leaves V unchanged on ARMv4, V is clear at both call sites).",
+   "params": [
+    {
+     "name": "p",
+     "type": "SeqPlayer *",
+     "reg": "r11"
+    },
+    {
+     "name": "d",
+     "type": "uint",
+     "reg": "r3"
+    },
+    {
+     "name": "ptr",
+     "type": "byte *",
+     "reg": "r12"
+    }
+   ],
+   "ret": {
+    "type": "int",
+    "reg": "r3"
+   },
+   "locals": {
+    "@r3:0x48dc": "t"
+   }
+  },
+  {
+   "addr": "0x4900",
+   "name": "seq_evq_push",
+   "signature": "void seq_evq_push(uint ev, uint wr_ofs, uint rd_ofs_m4)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "Pushes r5 into the event ring at write offset r6 unless r6 == r4 (= read offset - 4, loaded by the caller) and stores the new write offset to 0x13000 (r8) and in r6; clobbers r5.\nReturns to lr if the ring is FULL and to lr+4 after a successful push (add lr,lr,#4): callers place their 'full' branch right after the bl.\nQUIRK: r4 is not masked, so with read offset 0 the ring is never 'full' and the 1024th push empties it.",
+   "params": [
+    {
+     "name": "ev",
+     "type": "uint",
+     "reg": "r5"
+    },
+    {
+     "name": "wr_ofs",
+     "type": "uint",
+     "reg": "r6"
+    },
+    {
+     "name": "rd_ofs_m4",
+     "type": "uint",
+     "reg": "r4"
+    }
+   ],
+   "locals": {
+    "@r7:0x48ff": "ring",
+    "@r8:0x48ff": "wr_ofs_p"
+   }
+  },
+  {
+   "addr": "0x6454",
+   "name": "port_clear_play",
+   "signature": "void port_clear_play(uint port)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "g_port[port].status &= ~PORT_FLG_PLAY (end of sequence, from seq_tick 0x4808).",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ]
+  },
+  {
+   "addr": "0x6470",
+   "name": "port_status_export",
+   "signature": "void port_status_export(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Every 4 ms: publishes PortStatus records (0x20 bytes) for the SH-4 sd library getters:\n  0x13600+i*0x20 MIDI port i (PortState i + SeqPlayer i): flags (|0x80 if err), vol-0x80, pan-0x80, speed-0x8000, pitch-0x8000, loop_iter, fx/direct lvl-0x80, beats, cur-base, err, err_hi\n  0x13800+i*0x20 one-shot i (PcmPlayer i), 0x13A00+j*0x20 stream channel j = port*2+ch (PcmPlayer 8+j).\nPCM position fields only while keyed on. One-shot total = (LEA-LSA)*(u8)loop_count + CA (only the low byte of loop_count!); stream total = loop_count*ring_len_in_samples + CA.",
+   "params": [],
+   "locals": {
+    "@r0:0x6470": "ps",
+    "@r3:0x6478": {
+     "name": "sp",
+     "type": "SeqPlayer *"
+    },
+    "@r0:0x6520": "pl",
+    "@r1:0x6474": "st",
+    "@r12:0x6480": "n",
+    "@r2:0x6508": "flags",
+    "@r2:0x6650": "len",
+    "@HASH:5fd4c4f647:0x64ec": "err",
+    "@HASH:5f52271762:0x64f4": "err_hi"
+   }
+  },
+  {
+   "addr": "0x6698",
+   "name": "ticks_since_cmd_inc",
+   "signature": "void ticks_since_cmd_inc(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "ticks_since_cmd (0x13410)++ every 4 ms; host_cmd_exec logs it with each command and clears it.",
+   "params": []
+  },
+  {
+   "addr": "0x66b8",
+   "name": "port_vol_fade",
+   "signature": "void port_vol_fade(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Volume fade of the 8 MIDI ports: volume (+1) moves towards vol_target (+0) by vol_step (+4) every vol_interval (+2)+1 ticks (count +3); interval 0 = jump. Step -> vol_dirty (+5) = 1 and status |= CHG_VOL (4); reached -> status &= ~CHG_VOL.",
+   "params": [],
+   "locals": {
+    "@r1:0x66bc": "n",
+    "@r2:0x66c4": "target",
+    "@r3:0x66c8": "cur",
+    "@r3:0x6724": "v",
+    "@r4:0x6704": "step",
+    "@r5:0x66d0": "st",
+    "@r0:0x66b8": "ps"
+   }
+  },
+  {
+   "addr": "0x6758",
+   "name": "port_pan_fade",
+   "signature": "void port_pan_fade(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Pan fade of the 8 MIDI ports (+6 target, +7 pan, +8 interval, +9 count, +0xA step), sets pan_dirty (+0xB).\nQUIRK: sets CHG_VOL (4) while fading instead of CHG_PAN (0x10); CHG_PAN is only cleared.",
+   "params": [],
+   "locals": {
+    "@r0:0x6758": {
+     "name": "ps",
+     "type": "PortState *"
+    },
+    "@r1:0x675c": "n",
+    "@r2:0x6764": "target",
+    "@r3:0x6768": "cur",
+    "@r3:0x67c4": "v",
+    "@r4:0x67a4": "step",
+    "@r5:0x6770": "st"
+   }
+  },
+  {
+   "addr": "0x67f8",
+   "name": "port_speed_fade",
+   "signature": "void port_speed_fade(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Speed fade of the 8 MIDI ports (+0x18 target, +0x1C speed, +0x20 interval, +0x21 count, step = +0x22 * 16). On each step: g_seq_player[i].tempo_scale = max(0, (speed & 0xFFFF) - 0x4000) (0x8000 -> 0x4000 = 1x), status |= CHG_SPEED (8).",
+   "params": [],
+   "locals": {
+    "@r2:0x6808": "target",
+    "@r3:0x680c": "cur",
+    "@r3:0x685c": "v",
+    "@HASH:41f43928109:0x6850": "step",
+    "@r3:0x6894": "scale",
+    "@r5:0x6814": "st",
+    "@r0:0x67f8": {
+     "name": "ps",
+     "type": "PortState *"
+    },
+    "@r1:0x67fc": "n",
+    "@r11:0x6800": {
+     "name": "sp",
+     "type": "SeqPlayer *"
+    }
+   }
+  },
+  {
+   "addr": "0x68c4",
+   "name": "port_pitch_fade",
+   "signature": "void port_pitch_fade(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Pitch fade of the 8 MIDI ports (+0xC target, +0x10 pitch (1/256 semitone, 0x8000 = 0), +0x14 interval, +0x15 count, step = +0x16 * 2); step -> pitch_dirty (+0x17), status |= CHG_PITCH (0x20).\nQUIRK: 'movcs r3,#0' at 0x693C (should be movcc): a downward fade jumps to the target on its first step.",
+   "params": [],
+   "locals": {
+    "@r0:0x68c4": {
+     "name": "ps",
+     "type": "PortState *"
+    },
+    "@r1:0x68c8": "n",
+    "@r2:0x68d0": "target",
+    "@r3:0x68d4": "cur",
+    "@r3:0x6938": "v",
+    "@HASH:41fc1df2b3b:0x6918": "step",
+    "@r5:0x68dc": "st"
+   }
+  },
+  {
+   "addr": "0x6970",
+   "name": "pcm_speed_fade",
+   "signature": "void pcm_speed_fade(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Speed fade of the 24 PCM players (+0x40 target, +0x44 speed, +0x48 interval, +0x49 count, step = +0x4A*2); step -> pitch_dirty (+0x4B) = 0xFF, flags |= CHG_SPEED (8).\nQUIRK: same inverted 'movcs' as port_pitch_fade (0x69E4): downward fades jump to the target.",
+   "params": [],
+   "locals": {
+    "@r3:0x6980": "cur",
+    "@r3:0x69e0": "v",
+    "@HASH:41fe1bd4d17:0x69c0": "step",
+    "@r5:0x6988": "flags",
+    "@r12:0x6970": "pl",
+    "@r11:0x6974": "n",
+    "@r2:0x697c": "target"
+   }
+  },
+  {
+   "addr": "0x6a20",
+   "name": "pcm_pitch_fade",
+   "signature": "void pcm_pitch_fade(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Pitch fade of the 24 PCM players (+0x4C target, +0x50 pitch, +0x54 interval, +0x55 count, step = +0x56*2); step -> pitch_dirty = 0xFF, flags |= CHG_PITCH (0x20).",
+   "params": [],
+   "locals": {
+    "@r12:0x6a20": "pl",
+    "@r11:0x6a24": "n",
+    "@r2:0x6a2c": "target",
+    "@r3:0x6a30": "cur",
+    "@r3:0x6a90": "v",
+    "@HASH:41f487bf5e5:0x6a70": "step",
+    "@r5:0x6a38": "flags"
+   }
+  },
+  {
+   "addr": "0x6ad4",
+   "name": "pcm_pitch_update",
+   "signature": "void pcm_pitch_update(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "For each PCM player with pitch_dirty: clear it, pitch_ofs (+0x10) = lin(speed) + lin(pitch), where lin(v) converts v-0x8000 (1/256 semitone) to a signed AICA octave<<10|FNS offset via note_oct_tab[0x60 + semitones] and fns_lo_tab[semi*128 + fine] (+0x100 per threshold 0x1EF/0x383/0x4D9); out of range -> 0x1FFF; negative inputs use ~x|0x8000 and negate the result.\nThe speed term is parked in the image word 0x6C40.",
+   "params": [],
+   "locals": {
+    "@r7:0x6b3c": "fns",
+    "@r12:0x6ad4": "pl",
+    "@r11:0x6ad8": "n",
+    "@r3:0x6af8": "x",
+    "@r2:0x6b14": "oct_semi",
+    "@r3:0x6b34": "tmp"
+   }
+  },
+  {
+   "addr": "0x711c",
+   "name": "pcm_tick",
+   "signature": "void pcm_tick(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Every 4 ms: one-shot players 0..7: flags = pcm_update(); if still keyed on flags = shot_monitor(). Stream channels 8..23: flags = pcm_update(); if keyed on stream_monitor().",
+   "params": [],
+   "locals": {
+    "@r5:0x7128": "n",
+    "@r10:0x711b": "slot",
+    "@r11:0x711b": "ch",
+    "@r0:0x712c": "flags"
+   }
+  },
+  {
+   "addr": "0x7178",
+   "name": "pcm_update",
+   "signature": "uint pcm_update(PcmPlayer * pl)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Per PCM player. If keyed on: r10 = &g_pcm_slot[slot], r11 = AICA channel, MSLC = 48+slot (select for monitoring).\nVolume fade (flags bit2; +0x14 interval, +0x15 step, +0x18 target, +0x1C count, +0x1E volume) and pan fade (bit4; +0x16/+0x17/+0x19/+0x1D/+0x1F). When keyed on writes TL byte (+0x29) = clamp(0x100 - 2*vol + tl_base) -> +0x20 and DIPAN byte (+0x24) = lin_to_aica[clamp(aica_to_lin[pan_base] + pan/4 - 32)] -> +0x21, then tail-calls 0x7DEC (pitch register = pitch_base + pitch_ofs).\nReturns the new flags in r0.\nQUIRK: decreasing has no clamp at 0: volume/pan < step wraps (u32) and its low byte is stored.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@HASH:5fe5843090:0x7178": "flags_in",
+    "@r0:0x7178": "flags",
+    "@r2:0x71bc": "x",
+    "@r2:0x71c8": "v",
+    "@r4:0x71d0": "target",
+    "@r9:0x7177": "aica_common",
+    "@r11:0x7177": "ch"
+   }
+  },
+  {
+   "addr": "0x7350",
+   "name": "shot_monitor",
+   "signature": "uint shot_monitor(PcmPlayer * pl, uint flags)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "One-shot player keyed on (after pcm_update selected its channel): 30 dummy reads of pl->start (monitor settle), then MON_EG bit15 (LP = loop/sample end passed):\n  LP and LPCTL and (loops_left == 0 or --loops_left != 0) -> loop_count++;\n  LP otherwise -> key off (KYONEX, ~KYONB), release player + slot (0x8204, keeping +0x23/+0x29), flags &= ~1, return.\nThen (0x73F4) cur_pos/cur_addr from MON_CA. Returns flags in r0.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "flags",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "slot",
+     "type": "PcmSlot *",
+     "reg": "r10"
+    },
+    {
+     "name": "ch",
+     "type": "AicaChannel *",
+     "reg": "r11"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r0"
+   },
+   "locals": {
+    "@r1:0x73b0": "keep_mode",
+    "@r3:0x73f4": "cur",
+    "@HASH:5f286ceee3:0x73a8": "keep_fx_ch",
+    "@r1:0x7384": "left",
+    "@r1:0x7400": "pcms",
+    "@r1:0x7410": "ofs",
+    "@r3:0x7350": "settle",
+    "@r9:0x734f": "aica_common"
+   }
+  },
+  {
+   "addr": "0x73c8",
+   "name": "stream_monitor",
+   "signature": "void stream_monitor(PcmPlayer * pl)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Stream channel keyed on: 30 settle reads, loop_mode (+0x23) = MON_EG>>15 (LP), LP -> loop_count++ (ring wrapped).\n0x73F4 pcm_store_pos (shared with shot_monitor): cur = MON_CA; if cur != 0: cur_pos (+4) = cur, cur_addr (+8) = start + (pcms>1 ? cur*2 : pcms==0 ? cur/2 : 1).\nBUG: for pcms == 1 neither movgt nor movlt fires, r1 keeps pcms, so cur_addr = start + 1.\nQUIRK: that scaling is the inverse of samples->bytes (16-bit should be *2, ADPCM /2); +8 is not exported.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    }
+   ],
+   "locals": {
+    "@r3:0x73c8": "settle",
+    "@r9:0x73c7": "aica_common",
+    "@r1:0x7400": "pcms",
+    "@r1:0x7410": "ofs",
+    "@r3:0x73f4": "lp_cur"
+   }
+  },
+  {
+   "addr": "0x742c",
+   "name": "seq_init",
+   "signature": "void seq_init(void)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "Clears 0x10000-0x107FF (8 SeqPlayer, SeqGlobals + overflow queue, 48 SeqNote), tempo_scale = 0x4000 for all players, overflow read/write pointers = 0x10210, resume pointer = 0x10000. Boot and host commands (0x60BC, 0x613C).",
+   "params": [],
+   "locals": {
+    "@r11:0x742c": {
+     "name": "p",
+     "type": "SeqPlayer *"
+    },
+    "@r0:0x7430": "ofs"
+   }
+  },
+  {
+   "addr": "0x747c",
+   "name": "seq_play",
+   "signature": "uint seq_play(uint port, uint song, uint prio, byte * smsb)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "Host 0x01 sdMidiPlay (caller 0x4B9C checks SMSB magic, version 1 and ENDB). song >= count (smsb+0xC) -> err 0x04. Port playing: new prio != 0, old prio != 0 and new < old -> err 0x02; else seq_stop_player.\nprio &= ~7 (host sends prio<<3; it becomes event bits 31:27). end = smsb + offs[song+1], or size-4 (ENDB) when offs[song+1] reads the 'SMSD' tag of song 0 (last song). base = smsb+offs[song]; timebase = base[1]; beat_len = beat_count = base[2]; tick_len = timebase*beat_len>>4; beats = 0; cur = base+12; state = 1. Returns state in r1 (1).\nErrors are ORed into g_seq.err (0x10200); returns state byte [r11+1].\nQUIRK: on err 0x04 r11 is not yet set up (host_cmd_poll's slot counter) -> returns a byte of the vector table.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "song",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "prio",
+     "type": "uint",
+     "reg": "r2"
+    },
+    {
+     "name": "smsb",
+     "type": "byte *",
+     "reg": "r12"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r1"
+   },
+   "locals": {
+    "@r1:0x74ec": "end_ofs",
+    "@r2:0x749c": "prio8",
+    "@r2:0x750c": "timebase",
+    "@r3:0x7510": "tempo",
+    "@r12:0x7504": "sd",
+    "@r0:0x7494": "pn",
+    "@r11:0x747b": "p",
+    "@r0:0x74c8": "err"
+   }
+  },
+  {
+   "addr": "0x7564",
+   "name": "seq_stop",
+   "signature": "uint seq_stop(uint port)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "Host 0x02 sdMidiStop (+0x519C, 0x59B8): r11 = &g_seq_player[port&7], falls into seq_stop_player. Returns state in r1.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r1"
+   },
+   "locals": {
+    "@r0:0x756c": "pn",
+    "@r3:0x75b4": "note",
+    "@HASH:3ff631cc4c:0x75e4": "wr",
+    "@r2:0x7654": "rd"
+   }
+  },
+  {
+   "addr": "0x7574",
+   "name": "seq_stop_player",
+   "signature": "uint seq_stop_player(SeqPlayer * p, uint port)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "Clears SEQ_PLAYING and the playback fields (prio, call/loop state, end, timebase, tick_len, delta, extras, beat_len; keeps cur/base/beats/loop_iter/tempo_scale), frees this port's pending note-offs WITHOUT sending them, then branches to 0x7618 (seq_purge_port, in seq_pause): zero this port's note-ons still in the event ring and voices_key_off_port. Returns state in r1.",
+   "params": [
+    {
+     "name": "p",
+     "type": "SeqPlayer *",
+     "reg": "r11"
+    },
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r1"
+   },
+   "locals": {
+    "@HASH:3ff631cc4c:0x75e4": "wr",
+    "@r2:0x7654": "rd",
+    "@r3:0x75b4": "note"
+   }
+  },
+  {
+   "addr": "0x75f4",
+   "name": "seq_pause",
+   "signature": "uint seq_pause(uint port)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "Host 0x03 sdMidiPause: state |= SEQ_PAUSED (even when idle). If it was playing: 0x7618 seq_purge_port = zero the port's note-on events in the ring (do-while from read to write offset: scans all 1024 slots when the ring is empty) and voices_key_off_port. Pending note-offs stay queued, frozen (seq_tick skips paused ports). Returns state in r1.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r1"
+   },
+   "locals": {
+    "@HASH:5f4c549c38:0x7604": "old",
+    "@r1:0x7608": "st",
+    "@r0:0x75fc": "pn",
+    "@HASH:3feb89bd0c:0x760c": "wr",
+    "@r2:0x7654": "rd"
+   }
+  },
+  {
+   "addr": "0x7674",
+   "name": "seq_continue",
+   "signature": "uint seq_continue(uint port)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "Host 0x04 sdMidiContinue: if paused, clear SEQ_PAUSED; if playing, push a note-on (pending note-off | 0x01000000) for every queued note of the port, re-triggering the held notes. Ring full -> mark this and remaining entries with bit24 (seq_tick sends them), err 0x20.\nQUIRK: the write offset is only stored when all fitted (0x76CC); on 'full' the note-ons already written are lost. Returns state in r1.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r1"
+   },
+   "locals": {
+    "@r10:0x7718": "note",
+    "@HASH:5f3fe4bc9c:0x7684": "old",
+    "@r0:0x767c": "pn",
+    "@r1:0x7690": "wr",
+    "@r1:0x76d8": "ev",
+    "@r4:0x76bc": "full",
+    "@r10:0x76d8": "next"
+   }
+  },
+  {
+   "addr": "0x7744",
+   "name": "seq_break_loop",
+   "signature": "void seq_break_loop(uint port)",
+   "confidence": "high",
+   "source": "src/arm/sequencer.c",
+   "plate": "Host 0x0C (not emitted by sd 1.00.18): loop_left = 0 -> the active meta-0x82 loop ends at its next end marker.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ]
+  },
+  {
+   "addr": "0x7778",
+   "name": "pcm_init",
+   "signature": "void pcm_init(void)",
+   "confidence": "high",
+   "source": "src/arm/port.c",
+   "plate": "Boot: clears the 24 PcmPlayer records (0x11000), neutral targets/values (0x80 / 0x8000), fx_ch = 0x80; stream channels: pan_base 0x1F (even, left) / 0x0F (odd, right), disdl_base 0x0F. Slot table 0x12080: 16 x {0, 0, &AICA_CH[48+n]}.\nQUIRK: the clear loop writes 0x5C bytes per record (offset 0x58 included) -> also clears 0x11840 after the last record.",
+   "params": [],
+   "locals": {
+    "@r1:0x777c": "n",
+    "@r2:0x7784": "ofs",
+    "@r2:0x782c": "ch",
+    "@r4:0x77dc": "pan_base",
+    "@r10:0x7828": "slot",
+    "@r12:0x7778": "pl"
+   }
+  }
+ ],
+ "labels": [
+  {
+   "addr": "0x10000",
+   "name": "g_seq_player",
+   "type": "SeqPlayer[8]",
+   "comment": "MIDI sequence players (port i)"
+  },
+  {
+   "addr": "0x10200",
+   "name": "g_seq",
+   "type": "SeqGlobals",
+   "comment": "sequencer globals + overflow event queue 0x10210-0x102FF"
+  },
+  {
+   "addr": "0x10300",
+   "name": "g_seq_note",
+   "type": "SeqNote[48]",
+   "comment": "pending note-offs of sequenced notes"
+  },
+  {
+   "addr": "0x11000",
+   "name": "g_pcm_player",
+   "type": "PcmPlayer[24]",
+   "comment": "[0..7] one-shot ports, [8..23] PCM stream port*2+ch"
+  },
+  {
+   "addr": "0x12080",
+   "name": "g_pcm_slot",
+   "type": "PcmSlot[16]",
+   "comment": "AICA channels 48-63"
+  },
+  {
+   "addr": "0x13600",
+   "name": "g_midi_status",
+   "type": "PortStatus[8]",
+   "comment": "MIDI port status for the SH-4 (port_status_export)"
+  },
+  {
+   "addr": "0x13800",
+   "name": "g_shot_status",
+   "type": "PortStatus[8]",
+   "comment": "one-shot port status"
+  },
+  {
+   "addr": "0x13a00",
+   "name": "g_pstm_status",
+   "type": "PortStatus[16]",
+   "comment": "PCM stream status [port*2+ch]"
+  },
+  {
+   "addr": "0x13410",
+   "name": "ticks_since_cmd",
+   "type": "uint",
+   "comment": "4 ms ticks since the last host command (logged by host_cmd_exec)"
+  },
+  {
+   "addr": "0x6c40",
+   "name": "pcm_pitch_tmp",
+   "type": "uint",
+   "comment": "pcm_pitch_update scratch: linear speed term"
+  },
+  {
+   "addr": "0x45cc",
+   "name": "seq_jt_45cc",
+   "type": "pointer[7]",
+   "comment": "seq_tick channel-message table by (status-0x90)>>4: 9n nop, An/Bn 2 data, Cn/Dn 1 data, En pitch bend, Fn nop"
+  },
+  {
+   "addr": "0x4650",
+   "name": "seq_cmd_jt",
+   "type": "pointer[16]",
+   "comment": "seq_tick meta 0x80-0x8F: 80 nop, 81 call, 82 loop, 83 end, 84 tempo, 85-87 nop, 88-8B long gate, 8C-8F long delta"
+  },
+  {
+   "addr": "0x42f0",
+   "name": "seq_tick_retrig_pushed",
+   "comment": "lr+4 return of seq_evq_push (retrigger note-on pushed)"
+  },
+  {
+   "addr": "0x4360",
+   "name": "seq_tick_dead_purge",
+   "comment": "unreachable (see 0x4354)"
+  },
+  {
+   "addr": "0x43c4",
+   "name": "seq_next_event",
+   "comment": "count an event for meta 0x81, then parse"
+  },
+  {
+   "addr": "0x43e0",
+   "name": "seq_parse",
+   "comment": "end check, cur = ptr, read status byte"
+  },
+  {
+   "addr": "0x444c",
+   "name": "seq_ev_note",
+   "comment": "b<0x80: note 0 ll w cccc, note, vel, gate[ll+1], delta[1+w]"
+  },
+  {
+   "addr": "0x44fc",
+   "name": "seq_note_steal",
+   "comment": "note-off queue full"
+  },
+  {
+   "addr": "0x45a8",
+   "name": "seq_ev_channel",
+   "comment": "0xA0-0xFF"
+  },
+  {
+   "addr": "0x4690",
+   "name": "seq_meta_call",
+   "comment": "0x81 hi lo n"
+  },
+  {
+   "addr": "0x46b4",
+   "name": "seq_meta_loop",
+   "comment": "0x82 cnt delta"
+  },
+  {
+   "addr": "0x472c",
+   "name": "seq_meta_tempo",
+   "comment": "0x84 hi lo delta"
+  },
+  {
+   "addr": "0x4754",
+   "name": "seq_meta_long_gate",
+   "comment": "0x88-0x8B"
+  },
+  {
+   "addr": "0x477c",
+   "name": "seq_meta_long_delta",
+   "comment": "0x8C-0x8F"
+  },
+  {
+   "addr": "0x47c4",
+   "name": "seq_end",
+   "comment": "0x83 or end of data: clear player, port_clear_play"
+  },
+  {
+   "addr": "0x4814",
+   "name": "seq_emit",
+   "comment": "drain overflow queue, then push the event"
+  },
+  {
+   "addr": "0x485c",
+   "name": "seq_emit_pushed",
+   "comment": "lr+4 return of seq_evq_push"
+  },
+  {
+   "addr": "0x4874",
+   "name": "seq_after_emit",
+   "comment": "delta 0 -> next event, else seq_add_delta"
+  },
+  {
+   "addr": "0x488c",
+   "name": "seq_ring_full",
+   "comment": "event ring full while emitting"
+  },
+  {
+   "addr": "0x48c4",
+   "name": "seq_stall",
+   "comment": "overflow queue full: stalled = 1, err |= 0x60"
+  },
+  {
+   "addr": "0x7618",
+   "name": "seq_purge_port",
+   "comment": "shared tail of seq_stop_player/seq_pause"
+  },
+  {
+   "addr": "0x73f4",
+   "name": "pcm_store_pos",
+   "comment": "shared tail of shot_monitor/stream_monitor"
+  }
+ ],
+ "comments": [
+  {
+   "addr": "0x4270",
+   "kind": "eol",
+   "text": "r9 = &g_seq"
+  },
+  {
+   "addr": "0x4278",
+   "kind": "eol",
+   "text": "g_seq.stalled == 1 -> nothing to do"
+  },
+  {
+   "addr": "0x42a0",
+   "kind": "eol",
+   "text": "r4 = read-4 (unmasked full test for seq_evq_push)"
+  },
+  {
+   "addr": "0x42d8",
+   "kind": "eol",
+   "text": "time -= tempo_scale of the event's port"
+  },
+  {
+   "addr": "0x42e0",
+   "kind": "eol",
+   "text": "bit24: note-on still to be re-sent (seq_continue)"
+  },
+  {
+   "addr": "0x42e8",
+   "kind": "eol",
+   "text": "push; returns here if FULL, to 0x42F0 on success"
+  },
+  {
+   "addr": "0x42f4",
+   "kind": "eol",
+   "text": "re-sent: becomes a plain note-off again"
+  },
+  {
+   "addr": "0x4324",
+   "kind": "eol",
+   "text": "push note-off; FULL -> 0x4328, ok -> 0x432C"
+  },
+  {
+   "addr": "0x4354",
+   "kind": "eol",
+   "text": "BUG: compares entry pointer with the loop COUNTER r1 -> always exits with error 0x20"
+  },
+  {
+   "addr": "0x4390",
+   "kind": "eol",
+   "text": "beat countdown -= tempo_scale>>12 (4 per tick at 1x)"
+  },
+  {
+   "addr": "0x43b8",
+   "kind": "eol",
+   "text": "delta -= tempo_scale; old delta > tempo_scale UNSIGNED -> next port (a negative delta counts as huge)"
+  },
+  {
+   "addr": "0x43c4",
+   "kind": "eol",
+   "text": "meta 0x81 event counter: at 1 return to call_ret"
+  },
+  {
+   "addr": "0x43fc",
+   "kind": "eol",
+   "text": "0x80-0x8F -> meta table, 0x90+ -> (b-0x90)>>4"
+  },
+  {
+   "addr": "0x4458",
+   "kind": "eol",
+   "text": "(prio|1)<<8 | port<<4 | ch : note-on event hi half"
+  },
+  {
+   "addr": "0x4474",
+   "kind": "eol",
+   "text": "gate length bytes = ((b>>5)&3)+1, big endian"
+  },
+  {
+   "addr": "0x4498",
+   "kind": "eol",
+   "text": "gate*tick_len + gate_extra (mvnvs is dead: V unaffected by MLAS)"
+  },
+  {
+   "addr": "0x44a4",
+   "kind": "eol",
+   "text": "+ current delta remainder (<= 0)"
+  },
+  {
+   "addr": "0x44b4",
+   "kind": "eol",
+   "text": "bit4 of the note byte: 2-byte delta"
+  },
+  {
+   "addr": "0x44e4",
+   "kind": "eol",
+   "text": "store note-off (type 0) in the queue slot"
+  },
+  {
+   "addr": "0x4500",
+   "kind": "eol",
+   "text": "err |= 0x80 SLOT_NO_ENOUGH (steal a note)"
+  },
+  {
+   "addr": "0x4508",
+   "kind": "eol",
+   "text": "pushed r10 is never popped on the 0x48C4 exit -> ldmia pops it into pc (jumps to address <port>)"
+  },
+  {
+   "addr": "0x4564",
+   "kind": "eol",
+   "text": "keeps the max age but the victim below is taken unconditionally"
+  },
+  {
+   "addr": "0x4568",
+   "kind": "eol",
+   "text": "victim = last entry of the lowest priority"
+  },
+  {
+   "addr": "0x457c",
+   "kind": "eol",
+   "text": "write pointer wraps with >= here (with > in 0x4834/0x4894)"
+  },
+  {
+   "addr": "0x45bc",
+   "kind": "eol",
+   "text": "(prio|type)<<8 | port<<4 | ch"
+  },
+  {
+   "addr": "0x45c8",
+   "kind": "eol",
+   "text": "jump table seq_jt_45cc"
+  },
+  {
+   "addr": "0x45ec",
+   "kind": "eol",
+   "text": "data1 bit7 = 2-byte delta flag"
+  },
+  {
+   "addr": "0x4624",
+   "kind": "eol",
+   "text": "pitch bend: data1 = 0, data2 = one byte, 1-byte delta"
+  },
+  {
+   "addr": "0x464c",
+   "kind": "eol",
+   "text": "jump table seq_cmd_jt"
+  },
+  {
+   "addr": "0x469c",
+   "kind": "eol",
+   "text": "call_ret = ptr after operands; call_count = n"
+  },
+  {
+   "addr": "0x46ac",
+   "kind": "eol",
+   "text": "ptr = base + 16-bit offset"
+  },
+  {
+   "addr": "0x46b8",
+   "kind": "eol",
+   "text": "loop_start == 0 -> this is the loop start"
+  },
+  {
+   "addr": "0x46d0",
+   "kind": "eol",
+   "text": "count 0 -> 0x80 = forever"
+  },
+  {
+   "addr": "0x46f8",
+   "kind": "eol",
+   "text": "jump back to loop start and re-read its operand/delta"
+  },
+  {
+   "addr": "0x470c",
+   "kind": "eol",
+   "text": "0x80 = infinite: do not decrement"
+  },
+  {
+   "addr": "0x4744",
+   "kind": "eol",
+   "text": "tick_len = timebase*tempo>>4"
+  },
+  {
+   "addr": "0x4808",
+   "kind": "eol",
+   "text": "port_clear_play(port)"
+  },
+  {
+   "addr": "0x4834",
+   "kind": "eol",
+   "text": "QUIRK: '>' lets the pointer reach 0x10300 (= g_seq_note[0].ev)"
+  },
+  {
+   "addr": "0x4848",
+   "kind": "eol",
+   "text": "overflow queue empty: now push the new event itself"
+  },
+  {
+   "addr": "0x4854",
+   "kind": "eol",
+   "text": "push; FULL -> 0x4858, ok -> 0x485C"
+  },
+  {
+   "addr": "0x4878",
+   "kind": "eol",
+   "text": "delta 0: next event immediately (delta_extra not consumed)"
+  },
+  {
+   "addr": "0x48a4",
+   "kind": "eol",
+   "text": "r2 == 0: the new event was being pushed -> it is DROPPED"
+  },
+  {
+   "addr": "0x48b4",
+   "kind": "eol",
+   "text": "resume at this port next tick"
+  },
+  {
+   "addr": "0x48c8",
+   "kind": "eol",
+   "text": "stalled = 1 until seq_init"
+  },
+  {
+   "addr": "0x48dc",
+   "kind": "eol",
+   "text": "mlas: V not updated -> the mvnvs below never fires"
+  },
+  {
+   "addr": "0x491c",
+   "kind": "eol",
+   "text": "success: return to lr+4"
+  },
+  {
+   "addr": "0x7120",
+   "kind": "eol",
+   "text": "r12 = g_pcm_player"
+  },
+  {
+   "addr": "0x7124",
+   "kind": "eol",
+   "text": "r9 = 0x802800 (AICA common registers)"
+  },
+  {
+   "addr": "0x7138",
+   "kind": "eol",
+   "text": "one-shot: store flags after shot_monitor"
+  },
+  {
+   "addr": "0x7150",
+   "kind": "eol",
+   "text": "stream: store flags before stream_monitor"
+  },
+  {
+   "addr": "0x719c",
+   "kind": "eol",
+   "text": "MSLC = 48+slot: monitor this channel's EG/CA"
+  },
+  {
+   "addr": "0x71a8",
+   "kind": "eol",
+   "text": "vol fade: count 0 on entry = jump to target"
+  },
+  {
+   "addr": "0x71e4",
+   "kind": "eol",
+   "text": "no clamp at 0: u32 wrap stored as byte"
+  },
+  {
+   "addr": "0x7224",
+   "kind": "eol",
+   "text": "TL = 0x100 - 2*volume + tl_base"
+  },
+  {
+   "addr": "0x7240",
+   "kind": "eol",
+   "text": "TL byte of AICA reg 0x28"
+  },
+  {
+   "addr": "0x72c8",
+   "kind": "eol",
+   "text": "pan/4 - 32 + aica_to_lin[pan_base]"
+  },
+  {
+   "addr": "0x72f8",
+   "kind": "eol",
+   "text": "DIPAN byte of AICA reg 0x24"
+  },
+  {
+   "addr": "0x730c",
+   "kind": "eol",
+   "text": "tail call 0x7DEC: write AICA pitch = pitch_base + pitch_ofs"
+  },
+  {
+   "addr": "0x7354",
+   "kind": "eol",
+   "text": "30 dummy reads: let MSLC settle before reading the monitor"
+  },
+  {
+   "addr": "0x7360",
+   "kind": "eol",
+   "text": "MON_EG"
+  },
+  {
+   "addr": "0x7364",
+   "kind": "eol",
+   "text": "LP: loop end / sample end passed (clear on read)"
+  },
+  {
+   "addr": "0x7370",
+   "kind": "eol",
+   "text": "LPCTL: looping sample"
+  },
+  {
+   "addr": "0x7378",
+   "kind": "eol",
+   "text": "loops_left 0 = loop forever"
+  },
+  {
+   "addr": "0x7390",
+   "kind": "eol",
+   "text": "key off: KYONEX | ~KYONB"
+  },
+  {
+   "addr": "0x73b0",
+   "kind": "eol",
+   "text": "release player + slot (r6 = 0), loop_mode/fx_ch preserved"
+  },
+  {
+   "addr": "0x73dc",
+   "kind": "eol",
+   "text": "LP flag (MON_EG bit15)"
+  },
+  {
+   "addr": "0x73f4",
+   "kind": "eol",
+   "text": "MON_CA (0 = not started yet: keep old position)"
+  },
+  {
+   "addr": "0x7404",
+   "kind": "eol",
+   "text": "pcms > 1 (ADPCM): *2, 0 (16-bit): /2 -- inverse of samples->bytes"
+  },
+  {
+   "addr": "0x7450",
+   "kind": "eol",
+   "text": "tempo_scale = 0x4000 (1x)"
+  },
+  {
+   "addr": "0x749c",
+   "kind": "eol",
+   "text": "prio &= ~7 (host sends prio<<3)"
+  },
+  {
+   "addr": "0x74a0",
+   "kind": "eol",
+   "text": "unaligned ldr: low byte = state"
+  },
+  {
+   "addr": "0x74c0",
+   "kind": "eol",
+   "text": "new prio lower than current -> err 0x02 PRIORITY"
+  },
+  {
+   "addr": "0x74f4",
+   "kind": "eol",
+   "text": "offs[song+1] == 'SMSD' (tag of song 0): last song, end = size-4 (ENDB)"
+  },
+  {
+   "addr": "0x751c",
+   "kind": "eol",
+   "text": "tick_len = timebase*tempo>>4"
+  },
+  {
+   "addr": "0x7564",
+   "kind": "eol",
+   "text": "falls through into seq_stop_player"
+  },
+  {
+   "addr": "0x75c8",
+   "kind": "eol",
+   "text": "note-off of this port: freed without sending"
+  },
+  {
+   "addr": "0x75ec",
+   "kind": "eol",
+   "text": "done -> 0x7618 seq_purge_port (inside seq_pause)"
+  },
+  {
+   "addr": "0x7638",
+   "kind": "eol",
+   "text": "type 1 (note-on) of this port -> zeroed in place"
+  },
+  {
+   "addr": "0x7658",
+   "kind": "eol",
+   "text": "do-while: an empty ring is scanned all the way round"
+  },
+  {
+   "addr": "0x7664",
+   "kind": "eol",
+   "text": "voices_key_off_port(port)"
+  },
+  {
+   "addr": "0x76bc",
+   "kind": "eol",
+   "text": "read-4 (unmasked) == write -> ring full"
+  },
+  {
+   "addr": "0x76cc",
+   "kind": "eol",
+   "text": "all note-ons fitted: publish write offset"
+  },
+  {
+   "addr": "0x76f0",
+   "kind": "eol",
+   "text": "note-off | 0x01000000 = note-on (type 1)"
+  },
+  {
+   "addr": "0x770c",
+   "kind": "eol",
+   "text": "ring full: mark this entry (writeback r10 = this entry) and the rest; write offset is NOT stored"
+  },
+  {
+   "addr": "0x778c",
+   "kind": "eol",
+   "text": "writes offsets 0x58..0: one word into the next record"
+  },
+  {
+   "addr": "0x781c",
+   "kind": "eol",
+   "text": "stream pan_base alternates 0x1F (L) / 0x0F (R)"
+  },
+  {
+   "addr": "0x6488",
+   "kind": "eol",
+   "text": "exported unbiased: -0x80"
+  },
+  {
+   "addr": "0x64fc",
+   "kind": "eol",
+   "text": "any error byte -> flags |= 0x80 TROUBLE"
+  },
+  {
+   "addr": "0x65b4",
+   "kind": "eol",
+   "text": "ldrb: only the low byte of loop_count"
+  },
+  {
+   "addr": "0x6658",
+   "kind": "eol",
+   "text": "ring length bytes -> samples: 16-bit /2, 8-bit *1, ADPCM *2"
+  },
+  {
+   "addr": "0x67e0",
+   "kind": "eol",
+   "text": "QUIRK: pan fade sets CHG_VOL (4) instead of CHG_PAN (0x10)"
+  },
+  {
+   "addr": "0x6850",
+   "kind": "eol",
+   "text": "step*16"
+  },
+  {
+   "addr": "0x6888",
+   "kind": "eol",
+   "text": "tempo_scale = max(0, (speed & 0xFFFF) - 0x8000 + 0x4000)"
+  },
+  {
+   "addr": "0x6918",
+   "kind": "eol",
+   "text": "step*2"
+  },
+  {
+   "addr": "0x693c",
+   "kind": "eol",
+   "text": "BUG: movcs (should be movcc): downward step jumps to the target"
+  },
+  {
+   "addr": "0x69e4",
+   "kind": "eol",
+   "text": "BUG: movcs (should be movcc): downward step jumps to the target"
+  },
+  {
+   "addr": "0x6af8",
+   "kind": "eol",
+   "text": "x = pitch-0x8000; negative -> ~x | 0x8000 (sign in bit 15)"
+  },
+  {
+   "addr": "0x6b10",
+   "kind": "eol",
+   "text": "note_oct_tab[0x60 + semitones]"
+  },
+  {
+   "addr": "0x6b2c",
+   "kind": "eol",
+   "text": "index = semitone*128 + fine (7 bits)"
+  },
+  {
+   "addr": "0x6b44",
+   "kind": "eol",
+   "text": "+0x100 per FNS threshold"
+  },
+  {
+   "addr": "0x6b78",
+   "kind": "eol",
+   "text": "negative: two's complement"
+  },
+  {
+   "addr": "0x6b80",
+   "kind": "eol",
+   "text": "park speed term in 0x6C40"
+  },
+  {
+   "addr": "0x6c18",
+   "kind": "eol",
+   "text": "pitch_ofs = lin(speed) + lin(pitch)"
+  },
+  {
+   "addr": "0x42dc",
+   "kind": "eol",
+   "text": "signed: time <= tempo_scale -> expired"
+  },
+  {
+   "addr": "0x4890",
+   "kind": "eol",
+   "text": "r1 = 0x10300 from 0x4818 (seq_evq_push preserves r0-r3)"
+  },
+  {
+   "addr": "0x4444",
+   "kind": "eol",
+   "text": "unbalanced if entered from 0x48C4 via the steal path: lr = pushed port -> jumps to address 0..7"
+  },
+  {
+   "addr": "0x7410",
+   "kind": "eol",
+   "text": "BUG: pcms == 1 -> r1 still = 1, cur_addr = start + 1"
+  },
+  {
+   "addr": "0x4870",
+   "kind": "eol",
+   "text": "loop: drain the next overflow entry (lr+4 path, see 0x4854)"
+  }
+ ]
+}

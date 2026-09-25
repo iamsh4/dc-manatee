@@ -1,0 +1,1646 @@
+{
+ "functions": [
+  {
+   "addr": "0x6dfc",
+   "name": "shot_set_vol",
+   "signature": "void shot_set_vol(uint port, uint vol, uint fade)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x15 sdShotSetVol. r0 port, r1 vol (+0x80 biased), r2 fade ms.\nr12 = &g_pcm_player[port&7]; joins the pstm_set_vol body at 0x6E30: flags|=CHG_VOL, pcm_fade_calc,\nvol_target/interval/count/step; fade 0 -> volume = target at once. pcm_next_ch then returns (no channel bits in r0).",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "vol",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "fade",
+     "type": "uint",
+     "reg": "r2"
+    }
+   ],
+   "locals": {
+    "@r0:0x6e08": "pmask",
+    "@r3:0x6e40": "step",
+    "@r12:0x6e40": "pl",
+    "@r1:0x6e40": "target",
+    "@r1:0x6e5c": "next_vol",
+    "@r4:0x6dfb": "vol1",
+    "@r5:0x6dfb": "fade1"
+   }
+  },
+  {
+   "addr": "0x6e14",
+   "name": "pstm_set_vol",
+   "signature": "void pstm_set_vol(uint pmask, uint vol0, uint fade0, uint vol1, uint fade1)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x25 sdPstmSetVol. r0 = cmd[2] = port | 0x20 (ch0) | 0x10 (ch1); r1/r2 ch0 vol/fade, r4/r5 ch1 vol/fade.\nr12 = g_pstm_player[port*2]. Body 0x6E30 per selected channel (flags|=CHG_VOL, fade step/interval via pcm_fade_calc);\npcm_next_ch (0x6E64) moves to ch1 or returns from this routine.",
+   "params": [
+    {
+     "name": "pmask",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "vol0",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "fade0",
+     "type": "uint",
+     "reg": "r2"
+    },
+    {
+     "name": "vol1",
+     "type": "uint",
+     "reg": "r4"
+    },
+    {
+     "name": "fade1",
+     "type": "uint",
+     "reg": "r5"
+    }
+   ],
+   "locals": {
+    "@r12:0x6e2c": "pl",
+    "@r3:0x6e40": "step",
+    "@r1:0x6e40": "target",
+    "@r1:0x6e2c": "next_vol",
+    "@r1:0x6e5c": "next_vol2"
+   }
+  },
+  {
+   "addr": "0x6e64",
+   "name": "pcm_next_ch",
+   "signature": "void pcm_next_ch(uint pmask, PcmPlayer * pl, uint val1, uint fade1)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Channel-mask stepper of pstm_set_vol/pan. If pmask bit4 (ch1) is clear: pops the entry lr and returns from the\nwhole command. Else clears bit4, r12 += 0x58 (ch1 player), r1 = r4, r2 = r5 and returns to the body.",
+   "params": [
+    {
+     "name": "pmask",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "val1",
+     "type": "uint",
+     "reg": "r4"
+    },
+    {
+     "name": "fade1",
+     "type": "uint",
+     "reg": "r5"
+    }
+   ]
+  },
+  {
+   "addr": "0x6e84",
+   "name": "shot_set_pan",
+   "signature": "void shot_set_pan(uint port, uint pan, uint fade)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x16 sdShotSetPan. r0 port, r1 pan (+0x80), r2 fade ms. Joins the pan body 0x6EB8:\nflags|=CHG_PAN, pan_target/interval/count/step; fade 0 -> pan = target.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "pan",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "fade",
+     "type": "uint",
+     "reg": "r2"
+    }
+   ],
+   "locals": {
+    "@r1:0x6ee4": "next_pan",
+    "@r0:0x6e90": "pmask",
+    "@r4:0x6e83": "pan1",
+    "@r5:0x6e83": "fade1",
+    "@r12:0x6ec8": "pl",
+    "@r3:0x6ec8": "step",
+    "@r1:0x6ec8": "target"
+   }
+  },
+  {
+   "addr": "0x6e9c",
+   "name": "pstm_set_pan",
+   "signature": "void pstm_set_pan(uint pmask, uint pan0, uint fade0, uint pan1, uint fade1)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x26 sdPstmSetPan. r0 = port | 0x20 (ch0) | 0x10 (ch1); r1/r2 ch0 pan/fade, r4/r5 ch1. Pan analogue of pstm_set_vol.",
+   "params": [
+    {
+     "name": "pmask",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "pan0",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "fade0",
+     "type": "uint",
+     "reg": "r2"
+    },
+    {
+     "name": "pan1",
+     "type": "uint",
+     "reg": "r4"
+    },
+    {
+     "name": "fade1",
+     "type": "uint",
+     "reg": "r5"
+    }
+   ],
+   "locals": {
+    "@r3:0x6ec8": "step",
+    "@r12:0x6eb4": "pl",
+    "@r1:0x6ec8": "target",
+    "@r1:0x6eb4": "next_pan",
+    "@r1:0x6ee4": "next_pan2"
+   }
+  },
+  {
+   "addr": "0x6eec",
+   "name": "pcm_fade_calc",
+   "signature": "uint pcm_fade_calc(uint target, uint fade, uint cur)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Fade step for the 4 ms tick. In r1 target, r2 fade ms, r7 current. Out r3 step, r2 interval (ticks between steps).\ninterval = fade>>2, diff = |cur-target|&0xFF; halve both until diff<=1 (interval then clamped to 0xFF) or interval<=1.\nfade 0 -> r3 = 0 (immediate).",
+   "params": [
+    {
+     "name": "target",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "fade",
+     "type": "uint",
+     "reg": "r2"
+    },
+    {
+     "name": "cur",
+     "type": "uint",
+     "reg": "r7"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r3"
+   },
+   "locals": {
+    "@r2:0x6f14": "ticks",
+    "@r3:0x6efc": "diff"
+   }
+  },
+  {
+   "addr": "0x6f4c",
+   "name": "shot_set_fx_ch",
+   "signature": "void shot_set_fx_ch(uint port, uint in_ch, uint base_lvl)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x19 sdShotSetFxCh. r0 port, r1 DSP input ch (0xFF = sample default), r2 base level (+0x80, bits 7:4 kept).\nfx_base = r2&0xF0; fx_ch = in_ch+0x40 (bit6 = override). If playing: dsp_send byte = in_ch (or sample ISEL) + pcm_level_mix(fx_lvl, base>>4)<<4.\nQUIRK: in_ch 0xFF stores stale r4 (host_cmd_exec leaves 0x1340C -> 0x0C, bit6 clear = no override).",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "in_ch",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "base_lvl",
+     "type": "uint",
+     "reg": "r2"
+    }
+   ],
+   "locals": {
+    "@r12:0x6fb0": "pl",
+    "@r2:0x6f7c": "base",
+    "@r7:0x6fbc": "imxl",
+    "@r8:0x6f5c": "n",
+    "@r4:0x6f4b": "fx_ch",
+    "@r11:0x6f4b": "ch",
+    "@r1:0x6fbc": "isel"
+   }
+  },
+  {
+   "addr": "0x6f64",
+   "name": "pstm_set_fx_ch",
+   "signature": "void pstm_set_fx_ch(uint port, uint in_ch, uint base_lvl)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x29 sdPstmSetFxCh. As shot_set_fx_ch for both stream channels (r8 = 2 passes, joins 0x6F78).\nfx_ch byte (r4) is computed once before the pass loop (0x6F88), so both channels get the same byte.\nQUIRK: in_ch 0xFF with ch0 playing replaces r1 by ch0's isel; if ch1 plays too, its dsp_send becomes\nch0.isel + mix(fx_lvl, fx_base>>4)<<4 (FxCh base, not its own isel/imxl) while its fx_ch stays 0x0C (no override).",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "in_ch",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "base_lvl",
+     "type": "uint",
+     "reg": "r2"
+    }
+   ],
+   "locals": {
+    "@r7:0x6fbc": "imxl",
+    "@r8:0x6f74": "n",
+    "@r4:0x6f63": "fx_ch",
+    "@r11:0x6f63": "ch",
+    "@r1:0x6fbc": "isel",
+    "@r12:0x6fb0": "pl",
+    "@r2:0x6f7c": "base"
+   }
+  },
+  {
+   "addr": "0x6fe0",
+   "name": "shot_set_fx_lvl",
+   "signature": "void shot_set_fx_lvl(uint port, uint lvl)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x1A sdShotSetFxLev. r0 port, r1 level (+0x80). fx_lvl = r1; if playing IMXL = pcm_level_mix(r1, (fx_ch&0x40 ? fx_base : imxl)>>4).\n0x7038.. is also the tail of pcm_apply_params (r8 = 1).",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "lvl",
+     "type": "uint",
+     "reg": "r1"
+    }
+   ],
+   "locals": {
+    "@HASH:5f423b9c05:0x7030": "base",
+    "@r7:0x703c": "imxl",
+    "@r12:0x7020": "pl",
+    "@r8:0x6ff0": "n",
+    "@r11:0x6fdf": "ch",
+    "@r1:0x7020": "lvl_r7",
+    "@r1:0x703c": "lvl_r1"
+   }
+  },
+  {
+   "addr": "0x6ff8",
+   "name": "pstm_set_fx_lvl",
+   "signature": "void pstm_set_fx_lvl(uint port, uint lvl)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x2A sdPstmSetFxLev. As shot_set_fx_lvl for both channels of the stream port (r8 = 2).",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "lvl",
+     "type": "uint",
+     "reg": "r1"
+    }
+   ],
+   "locals": {
+    "@r1:0x703c": "lvl_r1",
+    "@r12:0x7020": "pl",
+    "@HASH:5f423b9c05:0x7030": "base",
+    "@r7:0x703c": "imxl",
+    "@r8:0x7008": "n",
+    "@r11:0x6ff7": "ch",
+    "@r1:0x7020": "lvl_r7"
+   }
+  },
+  {
+   "addr": "0x7068",
+   "name": "shot_set_direct_lvl",
+   "signature": "void shot_set_direct_lvl(uint port, uint lvl)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x1B sdShotSetDrctLev. r0 port, r1 level (+0x80). direct_lvl = r1; if playing DISDL = pcm_level_mix(r1, disdl_base)\n-> pl->disdl and channel byte 0x25.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "lvl",
+     "type": "uint",
+     "reg": "r1"
+    }
+   ],
+   "locals": {
+    "@r7:0x70b4": "disdl",
+    "@r8:0x7078": "n",
+    "@r11:0x7067": "ch",
+    "@r1:0x70a8": "lvl_r7",
+    "@r1:0x70b4": "lvl_r1",
+    "@r12:0x70a8": "pl"
+   }
+  },
+  {
+   "addr": "0x7080",
+   "name": "pstm_set_direct_lvl",
+   "signature": "void pstm_set_direct_lvl(uint port, uint lvl)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x2B sdPstmSetDrctLev. As shot_set_direct_lvl for both stream channels.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "lvl",
+     "type": "uint",
+     "reg": "r1"
+    }
+   ],
+   "locals": {
+    "@r7:0x70b4": "disdl",
+    "@r8:0x7090": "n",
+    "@r12:0x70a8": "pl",
+    "@r11:0x707f": "ch",
+    "@r1:0x70a8": "lvl_r7",
+    "@r1:0x70b4": "lvl_r1"
+   }
+  },
+  {
+   "addr": "0x70d4",
+   "name": "pcm_level_mix",
+   "signature": "uint pcm_level_mix(uint lvl, uint base)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "r7 = clamp(((base<<3) + lvl - 0x80) asr 3, 0, 15): host level (+0x80 biased) applied to a 4-bit base (IMXL/DISDL).",
+   "params": [
+    {
+     "name": "lvl",
+     "type": "uint",
+     "reg": "r7"
+    },
+    {
+     "name": "base",
+     "type": "uint",
+     "reg": "r6"
+    }
+   ],
+   "ret": {
+    "type": "uint",
+    "reg": "r7"
+   },
+   "locals": {
+    "@r7:0x70dc": "sum",
+    "@r7:0x70e4": "v"
+   }
+  },
+  {
+   "addr": "0x70f4",
+   "name": "pcm_player_slot_a",
+   "signature": "PcmSlot * pcm_player_slot_a(PcmPlayer * pl)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "r10 = &g_pcm_slot[pl->slot], r11 = r10->ch (clobbers r7, r9). Same as pcm_player_slot (0x8240).",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    }
+   ],
+   "ret": {
+    "type": "PcmSlot *",
+    "reg": "r10"
+   }
+  },
+  {
+   "addr": "0x7884",
+   "name": "shot_play",
+   "signature": "void shot_play(uint port, uint num, uint prio, SosbHeader * bank)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x11 sdShotPlay (handler 0x51F4 validated SOSB magic/version/ENDB). r0 port, r1 data number, r2 prio<<3, r3 SOSB.\nnum > count -> err 4 (QUIRK: num == count accepted). pcm_slot_alloc(kind 1); copy the SOSP register image\n(SA + bank address, 16 regs 0x08-0x44); latch disdl_base/isel/imxl/pcms/pan_base/tl_base, pitch_base = PITCH read back;\npcm_apply_params; loops_default = SOSP+0x28, shot_loops_apply(loop_mode, ring_len); clear PAUSE, LFORE;\ndummy MON_EG/MON_CA reads; key on (0x81D8).\nQUIRKs: SA_LO = 0x8000 transient write; pcms taken from SA_LO bits 8:7.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "num",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "prio",
+     "type": "uint",
+     "reg": "r2"
+    },
+    {
+     "name": "bank",
+     "type": "SosbHeader *",
+     "reg": "r3"
+    }
+   ],
+   "locals": {
+    "@r11:0x7883": "alloc_ch",
+    "@r0:0x7890": "w",
+    "@r9:0x78c4": "entry_ofs",
+    "@r12:0x78b0": "pl",
+    "@r7:0x78cc": "sosp_ctl",
+    "@r7:0x7918": "src",
+    "@r11:0x7918": "dst",
+    "@r11:0x7924": "dst_hi",
+    "@r10:0x78b0": "slot",
+    "@r11:0x78fc": "ch",
+    "@HASH:5fcbb8820a:0x7940": "sosp_b",
+    "@HASH:5f62250b4e:0x796c": "tl",
+    "@r1:0x78b0": "num_r1"
+   }
+  },
+  {
+   "addr": "0x79bc",
+   "name": "pstm_play",
+   "signature": "void pstm_play(uint port, uint fmt, uint banks, uint tl, uint freq, uint prio)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x21 sdPstmPlay. r0 port, r1 fmt (PCMS), r2 banks = bank0 | bank1<<8 | stereo<<16, r3 base vol (TL), r4 freq (OCT/FNS),\nr5 prio<<3. Per channel (ch0 kind 2, ch1 kind 3 if stereo): pcm_slot_alloc; SPSR bank (0x14180+n*8) addr 0 -> err 1;\nclamp ring (16-bit 0x1F000 / 8-bit 0xF000 / ADPCM 0x7000, PCMS forced 3), LEA = ring in samples; looping channel\n(KYONB|LPCTL, LSA 0, AR 31, RR 0x15, LPOFF Q4, FLV 0x1FF8, LFORE); pan_base 0 mono / 0x1F L / 0x0F R; pcm_apply_params.\nKeyed on with one KYONEX after the last channel. Mono on a port whose ch1 still plays: ch1 slot freed + key-off\n(its PLAY flag is left set - QUIRK). ch0.loops_left keeps the bank word.\nNote: pcm_key_exec_off (0x81EC) pops this routine's lr, so the mono path returns there; the b 0x81D8\nafter it (and the key-on the decompiler shows after it) never executes.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "fmt",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "banks",
+     "type": "uint",
+     "reg": "r2"
+    },
+    {
+     "name": "tl",
+     "type": "uint",
+     "reg": "r3"
+    },
+    {
+     "name": "freq",
+     "type": "uint",
+     "reg": "r4"
+    },
+    {
+     "name": "prio",
+     "type": "uint",
+     "reg": "r5"
+    }
+   ],
+   "locals": {
+    "@r2:0x7b28": "pan1",
+    "@r3:0x7b34": "keep_fx",
+    "@r2:0x79dc": "pan_base",
+    "@r12:0x79e4": "pl",
+    "@HASH:5f42a9e17d:0x7a0c": "bank",
+    "@r0:0x79d0": "kind_size",
+    "@r8:0x7a68": "lea",
+    "@r10:0x79e4": "slot",
+    "@r1:0x7a54": "pcms",
+    "@HASH:27fe6347969:0x7afc": "pan_p",
+    "@r1:0x79e4": "fmt_r1",
+    "@r11:0x79bb": "ch"
+   }
+  },
+  {
+   "addr": "0x7b68",
+   "name": "pcm_slot_alloc",
+   "signature": "PcmSlot * pcm_slot_alloc(PcmPlayer * pl, uint prio, uint kind)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Reserve one of AICA channels 48-63 for r12 (r5 prio 0..31, r0 kind 1 shot / 2 stream L / 3 stream R).\nOut r10 slot, r11 channel, r9 index. Playing player: prio < own prio (both != 0) -> err 2 via 0x81C4, else re-use own slot.\nElse first free slot (owner 0). Else victim scan 15..0: prio-0 slot taken at once, else lowest prio (ties: lowest\nprio|kind<<8 word, lowest index); new prio 0 or > victim steals, < fails, == compares prio+kind with the word (QUIRK: always fails).\nFail -> err 0x80 (kind 3: stream ch0 released first; pstm_release leaves r12 = ch0+0x58, so the error lands on ch1). Steal: release owner (0x7F50 / 0x7EA4) + KYONEX key-off.\nClaim: pl prio/slot, slot prio/kind/owner, PLAY, MSLC = 0x30+slot.\nQUIRK: after the victim scan r9 = -1, so pl->slot = 0xFF and MSLC = 0x2F (channel 47) when a victim is stolen.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "prio",
+     "type": "uint",
+     "reg": "r5"
+    },
+    {
+     "name": "kind",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "ret": {
+    "type": "PcmSlot *",
+    "reg": "r10"
+   },
+   "locals": {
+    "@r4:0x7b90": "err",
+    "@r6:0x7bc8": "min",
+    "@r6:0x7c20": "min_next",
+    "@r7:0x7bd4": "sprio",
+    "@r8:0x7bc8": "victim",
+    "@r9:0x7c54": "idx",
+    "@r10:0x7b67": "slot",
+    "@r10:0x7c64": "cand",
+    "@r11:0x7c64": "ch",
+    "@r11:0x7b67": "victim_word"
+   }
+  },
+  {
+   "addr": "0x7d14",
+   "name": "pcm_apply_params",
+   "signature": "void pcm_apply_params(PcmPlayer * pl, AicaChannel * ch, uint tl, uint pan_base, uint pitch)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Write a player's mix state to its channel. loop_count = 0; TL = clamp(tl + 0x100 - 2*volume) -> byte 0x29 + pl->tl;\nDIPAN = pan_lin_to_aica_b[clamp(pan_aica_to_lin_b[pan_base] + pan/4 - 0x20, 0, 31)] -> byte 0x24 + pl->dipan;\npcm_apply_pitch(r4); DISDL = pcm_level_mix(direct_lvl, disdl_base); ISEL = fx_ch (bit6) or isel;\nIMXL via the FxLev tail at 0x7038. Clears CHG_VOL/CHG_PAN if no fade interval.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "ch",
+     "type": "AicaChannel *",
+     "reg": "r11"
+    },
+    {
+     "name": "tl",
+     "type": "uint",
+     "reg": "r3"
+    },
+    {
+     "name": "pan_base",
+     "type": "uint",
+     "reg": "r2"
+    },
+    {
+     "name": "pitch",
+     "type": "uint",
+     "reg": "r4"
+    }
+   ],
+   "locals": {
+    "@HASH:5f9eccae63:0x7d8c": "b",
+    "@r3:0x7d2c": "v",
+    "@r6:0x7dc8": "imxl_base",
+    "@r7:0x7dbc": "lvl",
+    "@r12:0x7054": "next_pl",
+    "@tmpZR:0x7dcc": "no_override",
+    "@r1:0x703c": "fx_lvl_r1",
+    "@r1:0x7020": "lvl_r1"
+   }
+  },
+  {
+   "addr": "0x7dec",
+   "name": "pcm_apply_pitch",
+   "signature": "void pcm_apply_pitch(PcmPlayer * pl, AicaChannel * ch, uint pitch_base)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "PITCH = OCT/FNS of ((oct_flip(pitch_base>>11)<<10 | pitch_base&0x3FF) + pl->pitch_ofs); octave clamped to 15.\nQUIRK: octave extracted with lsr, so negative sums clamp to the top octave (movlt is dead). Tail of pcm_update (0x730C).",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "ch",
+     "type": "AicaChannel *",
+     "reg": "r11"
+    },
+    {
+     "name": "pitch_base",
+     "type": "uint",
+     "reg": "r4"
+    }
+   ],
+   "locals": {
+    "@r6:0x7e08": "lin",
+    "@r6:0x7e24": "oct"
+   }
+  },
+  {
+   "addr": "0x7e48",
+   "name": "shot_stop",
+   "signature": "void shot_stop(uint port)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x12 sdShotStop. If playing: pcm_player_slot, shot_release, KYONEX key-off (0x81EC).",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "locals": {
+    "@r11:0x7e47": "ch",
+    "@r10:0x7e68": "slot",
+    "@r12:0x7e68": "pl"
+   }
+  },
+  {
+   "addr": "0x7e78",
+   "name": "pstm_stop",
+   "signature": "void pstm_stop(uint port)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x22 sdPstmStop. If ch0 playing: pstm_release (ch0 + ch1) and KYONEX key-off.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "locals": {
+    "@r10:0x7e98": "slot",
+    "@r11:0x7e77": "ch",
+    "@r12:0x7e98": "pl",
+    "@r11:0x7e9c": "last_ch"
+   }
+  },
+  {
+   "addr": "0x7ea4",
+   "name": "pstm_release",
+   "signature": "AicaChannel * pstm_release(PcmPlayer * pl, PcmSlot * slot, AicaChannel * ch)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Stop a stream: for r12 (assumed ch0) and then ch1 if playing: pcm_slot_free keeping fx_ch, KYONB off (no KYONEX),\nloop_mode = start = ring_len = 0, pan_base 0x1F / 0x0F, disdl_base 0x0F, PLAY cleared.\nQUIRK: called by pcm_slot_alloc for a stolen ch1 too -> treats it as ch0 and also stops the next player.\nReturns r11 = last channel handled (caller keys it off). Side effect: r12 is always left at pl+0x58\n(pcm_slot_alloc's kind-3 failure path relies on it).",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "slot",
+     "type": "PcmSlot *",
+     "reg": "r10"
+    },
+    {
+     "name": "ch",
+     "type": "AicaChannel *",
+     "reg": "r11"
+    }
+   ],
+   "locals": {
+    "@HASH:5f630b6cd6:0x7eb4": "keep_fx",
+    "@r3:0x7eac": "pan"
+   },
+   "ret": {
+    "type": "AicaChannel *",
+    "reg": "r11"
+   }
+  },
+  {
+   "addr": "0x7f18",
+   "name": "shot_stop_all",
+   "signature": "void shot_stop_all(void)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x1F sdShotStopAll (and 0x80 with cmd[3]). shot_release every slot of kind 1, then one KYONEX (slot 15's register).",
+   "locals": {
+    "@r10:0x7f1c": "slot",
+    "@r11:0x7f28": "ch",
+    "@r9:0x7f20": "n"
+   }
+  },
+  {
+   "addr": "0x7f50",
+   "name": "shot_release",
+   "signature": "void shot_release(PcmPlayer * pl, PcmSlot * slot, AicaChannel * ch)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "pcm_release (keeping fx_ch), clear PLAY, KYONB off (caller executes KYONEX). r6 = 0.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "slot",
+     "type": "PcmSlot *",
+     "reg": "r10"
+    },
+    {
+     "name": "ch",
+     "type": "AicaChannel *",
+     "reg": "r11"
+    }
+   ],
+   "locals": {
+    "@HASH:5f6def0630:0x7f50": "keep_fx",
+    "@HASH:5fbce8f3ed:0x7f54": "flags",
+    "@r6:0x7f4f": "zero"
+   }
+  },
+  {
+   "addr": "0x7f80",
+   "name": "pstm_stop_all",
+   "signature": "void pstm_stop_all(void)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x2F sdPstmStopAll (and 0x80 with cmd[4]). For each slot of kind 2/3: pcm_slot_free keeping fx_ch, disdl_base 0xF,\nPLAY and KYONB off, loop_mode/start/ring_len 0, pan_base 0x1F (kind 2) / 0x0F (kind 3). Then one KYONEX.",
+   "locals": {
+    "@r10:0x7f84": "slot",
+    "@r12:0x7fb0": "pl",
+    "@HASH:5f663abdd7:0x7f9c": "kind",
+    "@HASH:5f75b212a2:0x7fb4": "keep_fx",
+    "@r3:0x7f8c": "pan",
+    "@r9:0x7f88": "n",
+    "@r11:0x7f98": "ch"
+   }
+  },
+  {
+   "addr": "0x7ffc",
+   "name": "shot_pause",
+   "signature": "void shot_pause(uint port)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x13 (not sent by sd 1.00.18). flags |= PAUSE; if playing: key-off (release). If loops_left == 1 the slot is\nreleased and PLAY cleared too. Not a real pause: shot_continue restarts the sample.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "locals": {
+    "@HASH:5f80277feb:0x800c": "flags",
+    "@r2:0x8044": "keep_fx",
+    "@r11:0x7ffb": "ch",
+    "@r10:0x8024": "slot",
+    "@r12:0x8024": "pl"
+   }
+  },
+  {
+   "addr": "0x8058",
+   "name": "shot_continue",
+   "signature": "void shot_continue(uint port)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x14 (not sent by sd 1.00.18). If PAUSE: clear it; if still PLAY: key on again (0x81D8) = restart from SA.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "locals": {
+    "@r12:0x8064": "pl",
+    "@HASH:5f7213ca7d:0x8068": "flags",
+    "@r11:0x8057": "ch"
+   }
+  },
+  {
+   "addr": "0x8090",
+   "name": "shot_reset_prm_all",
+   "signature": "void shot_reset_prm_all(void)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x1E with port 0xFF (sdShotResetAllPrm). shot_reset_prm loop over 16 players from 0x11000.\nQUIRK: only 8 are one-shots; stream ports 0-3 get ring_len/loop_mode zeroed too.",
+   "locals": {
+    "@r12:0x8090": "pl",
+    "@r11:0x808f": "ch"
+   }
+  },
+  {
+   "addr": "0x809c",
+   "name": "shot_reset_prm",
+   "signature": "void shot_reset_prm(uint port)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x1E sdShotResetPrm. ring_len (loop param) = loop_mode = 0; playing -> pcm_reset_ch_regs else pcm_reset_fields.\nThe loop counter r7 (1) is decremented in 0x81B4, which returns from here when it reaches 0.",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "locals": {
+    "@r12:0x80d8": "pl",
+    "@r11:0x809b": "ch"
+   }
+  },
+  {
+   "addr": "0x80e0",
+   "name": "pstm_reset_prm_all",
+   "signature": "void pstm_reset_prm_all(void)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x2E with port 0xFF (sdPstmResetAllPrm): parameter defaults for all 16 stream channels.",
+   "locals": {
+    "@r12:0x8120": "pl",
+    "@r11:0x80df": "ch"
+   }
+  },
+  {
+   "addr": "0x80ec",
+   "name": "pstm_reset_prm",
+   "signature": "void pstm_reset_prm(uint port)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x2E sdPstmResetPrm: parameter defaults for both channels of the stream port (r7 = 2).",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    }
+   ],
+   "locals": {
+    "@r12:0x8120": "pl",
+    "@r11:0x80eb": "ch"
+   }
+  },
+  {
+   "addr": "0x8128",
+   "name": "pcm_reset_ch_regs",
+   "signature": "void pcm_reset_ch_regs(PcmPlayer * pl, AicaChannel * ch, uint zero, uint count)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Playing player: TL = tl_base, DIPAN = pan_base, IMXL from imxl<<4 (QUIRK: imxl is already <<4 -> IMXL 0), DISDL = disdl_base;\nfalls into pcm_reset_fields.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "ch",
+     "type": "AicaChannel *",
+     "reg": "r11"
+    },
+    {
+     "name": "zero",
+     "type": "uint",
+     "reg": "r6"
+    },
+    {
+     "name": "count",
+     "type": "uint",
+     "reg": "r7"
+    }
+   ],
+   "locals": {
+    "@HASH:5f96cea841:0x8128": "base"
+   }
+  },
+  {
+   "addr": "0x815c",
+   "name": "pcm_reset_fields",
+   "signature": "void pcm_reset_fields(PcmPlayer * pl, uint zero, uint count)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host-parameter defaults: speed/pitch target+current 0x8000 (0 then 0x80 into byte 1), fade state 0, pitch_ofs 0,\nvol/pan target+current, fx_lvl, direct_lvl = 0x80, fx_ch = 0x80; clear CHG_VOL/CHG_PAN.\nTail 0x81B4: --r7; 0 -> pop entry lr and return from the command, else r12 += 0x58 and return to the loop.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "zero",
+     "type": "uint",
+     "reg": "r6"
+    },
+    {
+     "name": "count",
+     "type": "uint",
+     "reg": "r7"
+    }
+   ]
+  },
+  {
+   "addr": "0x81ec",
+   "name": "pcm_key_exec_off",
+   "signature": "void pcm_key_exec_off(AicaChannel * ch)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Shared exit: ch->ctl = (ctl & ~KYONB) | KYONEX (executes key on/off of all channels), then pops the entry lr and returns.",
+   "params": [
+    {
+     "name": "ch",
+     "type": "AicaChannel *",
+     "reg": "r11"
+    }
+   ]
+  },
+  {
+   "addr": "0x8204",
+   "name": "pcm_release",
+   "signature": "void pcm_release(PcmPlayer * pl, PcmSlot * slot, uint zero)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "loops_default = loops_left = start = r6 (0), then falls into pcm_slot_free.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "slot",
+     "type": "PcmSlot *",
+     "reg": "r10"
+    },
+    {
+     "name": "zero",
+     "type": "uint",
+     "reg": "r6"
+    }
+   ],
+   "locals": {
+    "@HASH:7ff81f06b51:0x821c": "z"
+   }
+  },
+  {
+   "addr": "0x8210",
+   "name": "pcm_slot_free",
+   "signature": "void pcm_slot_free(PcmPlayer * pl, PcmSlot * slot, uint zero)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Free the slot (owner, prio/kind word = 0) and zero pl prio, slot, pitch_base, tl, dipan, vol/pan counters and the\nwords +0x24 (tl_base,isel,imxl,pcms) and +0x28 (pan_base,fx_ch,disdl_base,disdl). Flags untouched.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "slot",
+     "type": "PcmSlot *",
+     "reg": "r10"
+    },
+    {
+     "name": "zero",
+     "type": "uint",
+     "reg": "r6"
+    }
+   ],
+   "locals": {
+    "@HASH:7ff81f06b51:0x821c": "z"
+   }
+  },
+  {
+   "addr": "0x8240",
+   "name": "pcm_player_slot",
+   "signature": "PcmSlot * pcm_player_slot(PcmPlayer * pl)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "r10 = &g_pcm_slot[pl->slot] (r9 = slot, r4 = 12 clobbered), r11 = r10->ch.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    }
+   ],
+   "ret": {
+    "type": "PcmSlot *",
+    "reg": "r10"
+   }
+  },
+  {
+   "addr": "0x8258",
+   "name": "shot_set_loop_mode",
+   "signature": "void shot_set_loop_mode(uint port, uint mode, uint param)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "Host 0x1C (no sd 1.00.18 API). r0 port, r1 mode 0..2 (>2 -> err 0x20 via 0x81C4, which pops the handler's lr),\nr2 param (u32). loop_mode = mode+1, ring_len = param; if flags byte != 0 falls into shot_loops_apply.\nModes: 1 default+param, 2 default*param>>8, 3 param (loops_left = loop passes, 0 = forever).",
+   "params": [
+    {
+     "name": "port",
+     "type": "uint",
+     "reg": "r0"
+    },
+    {
+     "name": "mode",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "param",
+     "type": "uint",
+     "reg": "r2"
+    }
+   ],
+   "locals": {
+    "@r0:0x8260": "port7"
+   }
+  },
+  {
+   "addr": "0x828c",
+   "name": "shot_loops_apply",
+   "signature": "void shot_loops_apply(PcmPlayer * pl, uint mode, uint param)",
+   "confidence": "high",
+   "source": "src/arm/host_helpers.c",
+   "plate": "loops_left via jump table 0x8298: 0 loops_default, 1 loops_default+param, 2 (loops_default*param)>>8, 3 param.",
+   "params": [
+    {
+     "name": "pl",
+     "type": "PcmPlayer *",
+     "reg": "r12"
+    },
+    {
+     "name": "mode",
+     "type": "uint",
+     "reg": "r1"
+    },
+    {
+     "name": "param",
+     "type": "uint",
+     "reg": "r2"
+    }
+   ]
+  }
+ ],
+ "labels": [
+  {
+   "addr": "0x7880",
+   "name": "k_sosb_tag",
+   "comment": "'SOSB' literal in front of shot_play; unreferenced (the handler uses 0x52DC)"
+  },
+  {
+   "addr": "0x81c4",
+   "name": "pcm_err_exit",
+   "comment": "pl->err |= r4; pop entry lr; return"
+  },
+  {
+   "addr": "0x81d8",
+   "name": "pcm_key_on_exit",
+   "comment": "pop entry lr; ch->ctl |= KYONEX|KYONB"
+  },
+  {
+   "addr": "0x81b4",
+   "name": "pcm_reset_next"
+  },
+  {
+   "addr": "0x7c64",
+   "name": "pcm_slot_steal"
+  },
+  {
+   "addr": "0x7ca4",
+   "name": "pcm_slot_claim"
+  },
+  {
+   "addr": "0x6e30",
+   "name": "pcm_vol_set"
+  },
+  {
+   "addr": "0x6eb8",
+   "name": "pcm_pan_set"
+  },
+  {
+   "addr": "0x6f78",
+   "name": "pcm_fx_ch_body"
+  },
+  {
+   "addr": "0x700c",
+   "name": "pcm_fx_lvl_body"
+  },
+  {
+   "addr": "0x7038",
+   "name": "pcm_write_imxl"
+  },
+  {
+   "addr": "0x7094",
+   "name": "pcm_direct_lvl_body"
+  }
+ ],
+ "comments": [
+  {
+   "addr": "0x6e28",
+   "kind": "eol",
+   "text": "ch0 selected? else pcm_next_ch -> ch1 or return"
+  },
+  {
+   "addr": "0x6e40",
+   "kind": "eol",
+   "text": "r3 step, r2 interval (ticks)"
+  },
+  {
+   "addr": "0x6e58",
+   "kind": "eol",
+   "text": "no fade: volume = target now"
+  },
+  {
+   "addr": "0x6e68",
+   "kind": "eol",
+   "text": "no ch1 bit: return from the whole command"
+  },
+  {
+   "addr": "0x6e74",
+   "kind": "eol",
+   "text": "next player = stream ch1"
+  },
+  {
+   "addr": "0x6ef8",
+   "kind": "eol",
+   "text": "ms -> 4 ms ticks"
+  },
+  {
+   "addr": "0x6f04",
+   "kind": "eol",
+   "text": "abs(cur - target)"
+  },
+  {
+   "addr": "0x6f14",
+   "kind": "eol",
+   "text": "diff <= 1?"
+  },
+  {
+   "addr": "0x6f24",
+   "kind": "eol",
+   "text": "interval clamped to 0xFF"
+  },
+  {
+   "addr": "0x6f34",
+   "kind": "eol",
+   "text": "halve step and interval together"
+  },
+  {
+   "addr": "0x6f7c",
+   "kind": "eol",
+   "text": "base level: keep bits 7:4"
+  },
+  {
+   "addr": "0x6f84",
+   "kind": "eol",
+   "text": "fx_ch = in_ch+0x40 (override), once for all passes; r4 is stale when in_ch == 0xFF (0x1340C -> 0x0C)"
+  },
+  {
+   "addr": "0x6fa8",
+   "kind": "eol",
+   "text": "0xFF: sample ISEL; QUIRK r1 stays replaced, so a playing ch1 gets ch0's ISEL and the fx_base level"
+  },
+  {
+   "addr": "0x6fc4",
+   "kind": "eol",
+   "text": "dsp_send byte = ISEL + IMXL<<4"
+  },
+  {
+   "addr": "0x702c",
+   "kind": "eol",
+   "text": "FxCh override active?"
+  },
+  {
+   "addr": "0x7048",
+   "kind": "eol",
+   "text": "keep ISEL"
+  },
+  {
+   "addr": "0x70e0",
+   "kind": "eol",
+   "text": "asr 3; negative -> 0"
+  },
+  {
+   "addr": "0x70ec",
+   "kind": "eol",
+   "text": "clamp 15"
+  },
+  {
+   "addr": "0x7100",
+   "kind": "eol",
+   "text": "r10 = &g_pcm_slot[pl->slot]"
+  },
+  {
+   "addr": "0x78a0",
+   "kind": "eol",
+   "text": "num > count -> err 4 (num == count accepted: off by one)"
+  },
+  {
+   "addr": "0x78b8",
+   "kind": "eol",
+   "text": "QUIRK: SA_LO = 0x8000, overwritten at 0x7908"
+  },
+  {
+   "addr": "0x78c4",
+   "kind": "eol",
+   "text": "SOSB offset[num] -> SOSP entry"
+  },
+  {
+   "addr": "0x78d8",
+   "kind": "eol",
+   "text": "ctl|sa_lo halves swapped: SA[22:0] in bits 22:0"
+  },
+  {
+   "addr": "0x78dc",
+   "kind": "eol",
+   "text": "relocate by the bank address"
+  },
+  {
+   "addr": "0x78e8",
+   "kind": "eol",
+   "text": "cur_addr = start = SA"
+  },
+  {
+   "addr": "0x7908",
+   "kind": "eol",
+   "text": "AICA reg 0: ctl + SA[22:16] (no KYONB)"
+  },
+  {
+   "addr": "0x7918",
+   "kind": "eol",
+   "text": "copy 16 halfwords -> AICA regs 0x08..0x44"
+  },
+  {
+   "addr": "0x7954",
+   "kind": "eol",
+   "text": "QUIRK: bits 24:23 of the word = SA_LO bits 8:7, not PCMS"
+  },
+  {
+   "addr": "0x7974",
+   "kind": "eol",
+   "text": "pitch_base = PITCH register read back"
+  },
+  {
+   "addr": "0x7984",
+   "kind": "eol",
+   "text": "loops_default = SOSP loop count (byte store; bytes 1-3 stay 0)"
+  },
+  {
+   "addr": "0x79a4",
+   "kind": "eol",
+   "text": "LFORE off"
+  },
+  {
+   "addr": "0x79b0",
+   "kind": "eol",
+   "text": "dummy monitor reads after MSLC select"
+  },
+  {
+   "addr": "0x79d4",
+   "kind": "eol",
+   "text": "bank word kept in ch0.loops_left"
+  },
+  {
+   "addr": "0x79dc",
+   "kind": "eol",
+   "text": "stereo -> pan_base 0x1F (left) for ch0, else 0 (centre)"
+  },
+  {
+   "addr": "0x79ec",
+   "kind": "eol",
+   "text": "QUIRK: SA_LO = 0x8000, overwritten at 0x7ab0"
+  },
+  {
+   "addr": "0x7a0c",
+   "kind": "eol",
+   "text": "ch1: byte 1 of ch0.loops_left (r12-0x1F = ch0+0x39)"
+  },
+  {
+   "addr": "0x7a14",
+   "kind": "eol",
+   "text": "SPSR table 0x14180 + bank*8"
+  },
+  {
+   "addr": "0x7a20",
+   "kind": "eol",
+   "text": "ring address 0 -> err 1"
+  },
+  {
+   "addr": "0x7a38",
+   "kind": "eol",
+   "text": "8-bit: clamp 0xF000, LEA = bytes"
+  },
+  {
+   "addr": "0x7a48",
+   "kind": "eol",
+   "text": "ADPCM: clamp 0x7000, LEA = bytes*2, PCMS = 3 (long-stream ADPCM)"
+  },
+  {
+   "addr": "0x7a5c",
+   "kind": "eol",
+   "text": "16-bit: clamp 0x1F000, LEA = bytes/2"
+  },
+  {
+   "addr": "0x7a7c",
+   "kind": "eol",
+   "text": "KYONB | LPCTL"
+  },
+  {
+   "addr": "0x7a8c",
+   "kind": "eol",
+   "text": "FLV0-4 = 0x1FF8 (filter open)"
+  },
+  {
+   "addr": "0x7ac0",
+   "kind": "eol",
+   "text": "LPOFF | Q 4"
+  },
+  {
+   "addr": "0x7ae8",
+   "kind": "eol",
+   "text": "RR 0x15"
+  },
+  {
+   "addr": "0x7b04",
+   "kind": "eol",
+   "text": "pan_base 0x0F: this was ch1 -> key on both"
+  },
+  {
+   "addr": "0x7b14",
+   "kind": "eol",
+   "text": "stereo: allocate ch1 (kind 3)"
+  },
+  {
+   "addr": "0x7b1c",
+   "kind": "eol",
+   "text": "mono: is a stale ch1 still playing?"
+  },
+  {
+   "addr": "0x7b34",
+   "kind": "eol",
+   "text": "free ch1's slot; QUIRK: its PLAY flag is not cleared"
+  },
+  {
+   "addr": "0x7b40",
+   "kind": "eol",
+   "text": "KYONEX: ch1 off, ch0 (KYONB set) on; 0x81EC pops pstm_play's lr, 0x7B44 never runs"
+  },
+  {
+   "addr": "0x7b48",
+   "kind": "eol",
+   "text": "no ring: undo the claim (prio byte kept)"
+  },
+  {
+   "addr": "0x7b7c",
+   "kind": "eol",
+   "text": "own prio 0 -> re-use own slot"
+  },
+  {
+   "addr": "0x7b84",
+   "kind": "eol",
+   "text": "new prio 0 -> re-use own slot"
+  },
+  {
+   "addr": "0x7b8c",
+   "kind": "eol",
+   "text": "new prio >= own -> re-use own slot, else err 2"
+  },
+  {
+   "addr": "0x7ba4",
+   "kind": "eol",
+   "text": "free slot (owner 0)?"
+  },
+  {
+   "addr": "0x7bc0",
+   "kind": "eol",
+   "text": "victim scan: min prio in r6, entry in r8"
+  },
+  {
+   "addr": "0x7bdc",
+   "kind": "eol",
+   "text": "prio 0 slot: take it at once (r9 valid)"
+  },
+  {
+   "addr": "0x7bec",
+   "kind": "eol",
+   "text": "equal prio: compare prio|kind<<8 words"
+  },
+  {
+   "addr": "0x7c0c",
+   "kind": "eol",
+   "text": "r9 = -1 from here on (QUIRK: stored as pl->slot)"
+  },
+  {
+   "addr": "0x7c24",
+   "kind": "eol",
+   "text": "QUIRK: prio + kind vs prio | kind<<8 -> never >="
+  },
+  {
+   "addr": "0x7c30",
+   "kind": "eol",
+   "text": "fail; stream ch1 -> release ch0 first"
+  },
+  {
+   "addr": "0x7c44",
+   "kind": "eol",
+   "text": "err 0x80: no channel (kind 3: r12 = ch1 again after pstm_release)"
+  },
+  {
+   "addr": "0x7c78",
+   "kind": "eol",
+   "text": "kind 1 (shot): shot_release, else pstm_release"
+  },
+  {
+   "addr": "0x7c9c",
+   "kind": "eol",
+   "text": "key off the old owner (KYONEX)"
+  },
+  {
+   "addr": "0x7ccc",
+   "kind": "eol",
+   "text": "MSLC = 48+slot: monitor this channel"
+  },
+  {
+   "addr": "0x7d28",
+   "kind": "eol",
+   "text": "0x100 - 2*volume"
+  },
+  {
+   "addr": "0x7d64",
+   "kind": "eol",
+   "text": "pan/4 - 0x20 (0x80 = centre)"
+  },
+  {
+   "addr": "0x7d70",
+   "kind": "eol",
+   "text": "AICA pan code -> linear 0..31"
+  },
+  {
+   "addr": "0x7d8c",
+   "kind": "eol",
+   "text": "linear -> AICA DIPAN code"
+  },
+  {
+   "addr": "0x7dcc",
+   "kind": "eol",
+   "text": "FxCh override? ISEL = fx_ch (incl. bit6; IMXL rewritten below)"
+  },
+  {
+   "addr": "0x7de8",
+   "kind": "eol",
+   "text": "tail into the FxLev body with r8 = 1"
+  },
+  {
+   "addr": "0x7df4",
+   "kind": "eol",
+   "text": "OCT two's complement -> offset binary"
+  },
+  {
+   "addr": "0x7e00",
+   "kind": "eol",
+   "text": "linear pitch: oct<<10 | FNS[9:0]"
+  },
+  {
+   "addr": "0x7e08",
+   "kind": "eol",
+   "text": "+ pitch_ofs (speed + pitch)"
+  },
+  {
+   "addr": "0x7e14",
+   "kind": "eol",
+   "text": "QUIRK: lsr, so negative -> huge -> clamps to 15"
+  },
+  {
+   "addr": "0x7e2c",
+   "kind": "eol",
+   "text": "OCT<<11 | FNS"
+  },
+  {
+   "addr": "0x7ea8",
+   "kind": "eol",
+   "text": "first pass pan_base 0x1F (ch0), second 0x0F"
+  },
+  {
+   "addr": "0x7ec4",
+   "kind": "eol",
+   "text": "KYONB off (no KYONEX here)"
+  },
+  {
+   "addr": "0x7ef8",
+   "kind": "eol",
+   "text": "QUIRK: assumes r12 was ch0; r12 stays advanced on return"
+  },
+  {
+   "addr": "0x7f30",
+   "kind": "eol",
+   "text": "kind 1 = one-shot"
+  },
+  {
+   "addr": "0x7fa0",
+   "kind": "eol",
+   "text": "kind 2 -> pan 0x1F, 3 -> 0x0F, <2 skip"
+  },
+  {
+   "addr": "0x8010",
+   "kind": "eol",
+   "text": "PAUSE set even if not playing"
+  },
+  {
+   "addr": "0x8034",
+   "kind": "eol",
+   "text": "last loop pass -> release the slot"
+  },
+  {
+   "addr": "0x8094",
+   "kind": "eol",
+   "text": "QUIRK: 16 players from 0x11000 (8 shots + stream ports 0-3)"
+  },
+  {
+   "addr": "0x80b8",
+   "kind": "eol",
+   "text": "loop param / mode reset (shot only)"
+  },
+  {
+   "addr": "0x814c",
+   "kind": "eol",
+   "text": "QUIRK: imxl already <<4 -> IMXL 0 after byte store"
+  },
+  {
+   "addr": "0x8184",
+   "kind": "eol",
+   "text": "vol/pan targets, fx_lvl, direct_lvl = 0x80"
+  },
+  {
+   "addr": "0x8194",
+   "kind": "eol",
+   "text": "byte 1 = 0x80 -> speed/pitch words = 0x8000"
+  },
+  {
+   "addr": "0x81c8",
+   "kind": "eol",
+   "text": "accumulate error bits (host copies them to status +0x1C)"
+  },
+  {
+   "addr": "0x81e0",
+   "kind": "eol",
+   "text": "KYONEX | KYONB: key on"
+  },
+  {
+   "addr": "0x81f4",
+   "kind": "eol",
+   "text": "KYONEX without KYONB: key off"
+  },
+  {
+   "addr": "0x8210",
+   "kind": "eol",
+   "text": "free the slot"
+  },
+  {
+   "addr": "0x826c",
+   "kind": "eol",
+   "text": "mode > 2 -> err 0x20"
+  },
+  {
+   "addr": "0x8284",
+   "kind": "eol",
+   "text": "any flag set (not just PLAY) -> apply now"
+  },
+  {
+   "addr": "0x82a8",
+   "kind": "pre",
+   "text": "mode 1: default + param"
+  },
+  {
+   "addr": "0x82b4",
+   "kind": "pre",
+   "text": "mode 2: default * param / 256"
+  },
+  {
+   "addr": "0x82c4",
+   "kind": "pre",
+   "text": "mode 0: SOSP default"
+  },
+  {
+   "addr": "0x82c8",
+   "kind": "pre",
+   "text": "mode 3: param"
+  }
+ ]
+}

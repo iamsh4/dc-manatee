@@ -1,0 +1,206 @@
+<!-- title: The MIDI engine & voices -->
+<div class="eyebrow">The Manatee driver</div>
+<h1>The MIDI engine &amp; voices</h1>
+<p class="lead">Music, and any sound the game chooses to play as notes, goes through a General-MIDI-like
+engine: 8 ports of 16 MIDI channels each, sharing 48 hardware voices. Instruments come from tone banks
+whose samples carry complete AICA register settings.</p>
+
+<h2 id="hierarchy">Ports, channels and voices</h2>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 300" role="img" aria-label="Ports, MIDI channels and voices">
+    <defs>
+      <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <text x="20" y="26" font-weight="700" font-size="14">8 ports</text>
+    <text x="300" y="26" font-weight="700" font-size="14">16 MIDI channels per port</text>
+    <text x="640" y="26" font-weight="700" font-size="14">48 shared voices</text>
+    <g data-tip="Port|A sequence player's output: master volume, pan, pitch and speed (all with fades), effect send and direct level, a priority, and a status record for the game.">
+      <rect class="arm" x="20" y="40" width="220" height="70" rx="8"/>
+      <text x="34" y="64" font-weight="650" font-size="13.5">port 0</text>
+      <text x="34" y="84" class="t-sec" font-size="12">volume · pan · pitch · speed</text>
+      <text x="34" y="100" class="t-sec" font-size="12">fx send · priority · status</text></g>
+    <rect class="box-soft" x="20" y="120" width="220" height="30" rx="8"/><text x="34" y="140" class="t-sec" font-size="12.5">port 1 … port 6</text>
+    <g data-tip="Port 7|Same as the others, plus it receives external MIDI input and the DSP output/program controllers.">
+      <rect class="box-soft" x="20" y="160" width="220" height="30" rx="8"/><text x="34" y="180" class="t-sec" font-size="12.5">port 7 (also external MIDI)</text></g>
+    <g data-tip="MIDI channel|Controller state: program and bank, volume, expression, pan, modulation, bend and range, sustain, RPN/NRPN, and Sega's sound-shaping offsets (filter, envelope, sends).">
+      <rect class="box" x="300" y="40" width="270" height="150" rx="8"/>
+      <text x="314" y="64" font-weight="650" font-size="13.5">channel state</text>
+      <text x="314" y="86" class="t-sec" font-size="12">program · bank · velocity curve</text>
+      <text x="314" y="104" class="t-sec" font-size="12">volume · expression · pan</text>
+      <text x="314" y="122" class="t-sec" font-size="12">modulation · bend · sustain</text>
+      <text x="314" y="140" class="t-sec" font-size="12">filter / envelope / send offsets</text>
+      <text x="314" y="170" class="t-muted" font-size="11.5">× 16 per port = 128 in total</text></g>
+    <g data-tip="Voices|Voice n drives AICA channel n. Any port and channel can use any voice; allocation is by priority and loudness.">
+      <rect class="aica" x="640" y="40" width="200" height="150" rx="8"/>
+      <text x="654" y="64" font-weight="650" font-size="13.5">voice records</text>
+      <text x="654" y="86" class="t-sec" font-size="12">which port / channel / note</text>
+      <text x="654" y="104" class="t-sec" font-size="12">velocity · priority · age</text>
+      <text x="654" y="122" class="t-sec" font-size="12">current level (monitor)</text>
+      <text x="654" y="140" class="t-sec" font-size="12">split used · bend offset</text>
+      <text x="654" y="170" class="t-muted" font-size="11.5">= AICA channels 0-47</text></g>
+    <path class="wire" d="M240 75 H300" marker-end="url(#m1)"/>
+    <path class="wire" d="M570 115 H640" marker-end="url(#m1)"/>
+    <text x="578" y="108" font-size="11.5" class="t-muted">note on</text>
+    <text x="20" y="240" font-size="12.5" class="t-sec">A port is what the game controls with host commands (play song, volume, fade…). A MIDI channel is what</text>
+    <text x="20" y="260" font-size="12.5" class="t-sec">MIDI events address (program, controllers). A voice is one sounding sample on one AICA channel.</text>
+    <text x="20" y="280" font-size="12.5" class="t-sec">One note can use up to four voices (layers).</text>
+  </svg>
+  </div>
+</figure>
+
+<h2 id="tone-banks">Tone banks: programs, layers and splits</h2>
+<p>An instrument bank (tagged <code>SMPB</code>) is a tree:</p>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 280" role="img" aria-label="Tone bank structure">
+    <defs>
+      <marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <g data-tip="Bank|A list of programs plus velocity curves. Downloaded by the SH-4 and chosen by bank select (CC 32).">
+      <rect class="mem" x="20" y="110" width="140" height="60" rx="8"/>
+      <text x="34" y="136" font-weight="700" font-size="14">Bank</text>
+      <text x="34" y="156" class="t-sec" font-size="12">programs · curves</text></g>
+    <g data-tip="Program|What a program change selects. Up to 4 layers; every layer sounds on each note.">
+      <rect class="arm" x="210" y="110" width="140" height="60" rx="8"/>
+      <text x="224" y="136" font-weight="700" font-size="14">Program</text>
+      <text x="224" y="156" class="t-sec" font-size="12">up to 4 layers</text></g>
+    <g data-tip="Layer|A set of splits, an optional key-on delay, pitch-bend ranges up and down, and a mute flag.">
+      <rect class="arm" x="400" y="40" width="150" height="54" rx="8"/><text x="414" y="64" font-weight="650" font-size="13.5">Layer 1</text><text x="414" y="82" class="t-sec" font-size="11.5">bend range · delay</text>
+      <rect class="arm" x="400" y="104" width="150" height="54" rx="8"/><text x="414" y="128" font-weight="650" font-size="13.5">Layer 2</text><text x="414" y="146" class="t-sec" font-size="11.5">bend range · delay</text>
+      <rect class="box-soft" x="400" y="168" width="150" height="30" rx="8"/><text x="414" y="188" class="t-sec" font-size="12">Layers 3, 4</text></g>
+    <g data-tip="Split|A key range and a velocity range, a root key and fine tune, a velocity curve, and a complete image of the AICA channel registers for one sample.">
+      <rect class="aica" x="600" y="30" width="240" height="110" rx="8"/>
+      <text x="614" y="54" font-weight="700" font-size="14">Split</text>
+      <text x="614" y="74" class="t-sec" font-size="12">key range · velocity range</text>
+      <text x="614" y="92" class="t-sec" font-size="12">root key · fine tune · curve</text>
+      <text x="614" y="110" class="t-sec" font-size="12">sample, loop, envelope, filter,</text>
+      <text x="614" y="128" class="t-sec" font-size="12">LFO, pan, sends, level</text></g>
+    <rect class="box-soft" x="600" y="150" width="240" height="30" rx="8"/><text x="614" y="170" class="t-sec" font-size="12">more splits (C1-B2, C3-B4 …)</text>
+    <path class="wire" d="M160 140 H210" marker-end="url(#m2)"/>
+    <path class="wire" d="M350 140 H375 V67 H400" marker-end="url(#m2)"/>
+    <path class="wire" d="M375 131 H400" marker-end="url(#m2)"/>
+    <path class="wire" d="M375 140 V183 H400" marker-end="url(#m2)"/>
+    <path class="wire" d="M550 67 H575 V85 H600" marker-end="url(#m2)"/>
+    <path class="wire" d="M575 85 V165 H600" marker-end="url(#m2)"/>
+    <text x="20" y="236" font-size="12.5" class="t-sec">A piano might be one layer with a split every few keys; a pad might layer a string sample with a slow-attack</text>
+    <text x="20" y="256" font-size="12.5" class="t-sec">choir on a second layer. The first split of each layer whose key and velocity windows fit the note is used.</text>
+  </svg>
+  </div>
+</figure>
+<p>Everything inside a bank is position-independent: the driver adds the bank's address when it follows
+offsets, including sample addresses, so the SH-4 can place a bank anywhere in sound RAM. This
+driver also carries two tiny built-in banks: a default instrument bank (a square and a sawtooth wave) that
+every channel points at after boot, and a default drum kit built on the noise generator.</p>
+
+<h2 id="note-on">What happens on note-on</h2>
+<ol class="steps">
+  <li><strong>Find the instrument</strong>The event names a port, channel, note and velocity. The channel's
+  current program gives up to four layers; muted layers are skipped.</li>
+  <li><strong>Pick a split per layer</strong>The first split whose key range and velocity range both contain
+  the note wins.</li>
+  <li><strong>Get a voice</strong>The allocator returns a free voice or steals one (see below). The voice
+  records who owns it: port, channel, note, velocity and the port's priority.</li>
+  <li><strong>Program the AICA channel</strong>The split's register image is copied into the channel, with
+  adjustments: sample address relocated by the bank address; envelope and filter-envelope rates offset by the
+  channel's controllers; filter levels offset by the channel's cutoff; LFO depth scaled by the modulation
+  wheel; send bus and send level from the tone, channel and port; pan from the tone or channel plus the port
+  pan; resonance and filter on/off from controllers.</li>
+  <li><strong>Loudness</strong>The velocity passes through the bank's velocity curve and is multiplied by the
+  channel level (volume × expression) and the tone's own level; the port volume is added as an offset, and
+  the result becomes the channel's total level.</li>
+  <li><strong>Pitch</strong>The note's distance from the split's root key, the port pitch, the channel's
+  pitch bend and the split's fine tune give a pitch in 1/256 semitones, converted into octave and fraction
+  with two lookup tables.</li>
+  <li><strong>Key on</strong>Unless the layer asks for a delay, the channel is keyed on at once. A delayed
+  layer is keyed on by the 4 ms update when its counter expires, unless a note-off arrives first.</li>
+</ol>
+
+<h2 id="voice-allocation">Voice allocation and stealing</h2>
+<p>With 48 voices shared by eight ports and up to four voices per note, running out is normal. The
+allocator walks all 48 voices once:</p>
+<figure>
+  <div class="frame">
+  <svg viewBox="0 0 860 250" role="img" aria-label="Voice allocation decision">
+    <defs>
+      <marker id="m3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)"/></marker>
+    </defs>
+    <rect class="box" x="20" y="30" width="190" height="60" rx="30"/>
+    <text x="44" y="56" font-weight="650" font-size="13.5">Is the voice</text><text x="44" y="74" font-weight="650" font-size="13.5">completely idle?</text>
+    <path class="wire" d="M115 90 V130" marker-end="url(#m3)"/><text x="122" y="116" font-size="12" class="t-muted">no</text>
+    <path class="wire" d="M210 60 H260" marker-end="url(#m3)"/><text x="218" y="52" font-size="12" class="t-muted">yes</text>
+    <rect class="aica" x="260" y="36" width="170" height="48" rx="8"/><text x="274" y="65" font-weight="650" font-size="13.5">take it immediately</text>
+    <rect class="box" x="20" y="130" width="190" height="60" rx="30"/>
+    <text x="40" y="156" font-weight="650" font-size="13.5">Higher priority than</text><text x="40" y="174" font-weight="650" font-size="13.5">the new note?</text>
+    <path class="wire" d="M210 160 H260" marker-end="url(#m3)"/><text x="218" y="152" font-size="12" class="t-muted">yes</text>
+    <rect class="box-soft" x="260" y="136" width="170" height="48" rx="8"/><text x="274" y="165" font-size="13.5" class="t-sec">never steal it</text>
+    <path class="wire" d="M115 190 V220 H470" marker-end="url(#m3)"/><text x="122" y="210" font-size="12" class="t-muted">no: candidate</text>
+    <rect class="arm" x="470" y="36" width="370" height="200" rx="10"/>
+    <text x="488" y="62" font-weight="700" font-size="14">Keep the best candidate</text>
+    <text x="488" y="88" class="t-sec" font-size="12.5">Prefer voices that are already released</text>
+    <text x="488" y="106" class="t-sec" font-size="12.5">(key off, fading out) over held notes.</text>
+    <text x="488" y="132" class="t-sec" font-size="12.5">Among released voices, the quietest wins,</text>
+    <text x="488" y="150" class="t-sec" font-size="12.5">judged by the envelope monitor.</text>
+    <text x="488" y="176" class="t-sec" font-size="12.5">Otherwise: lower priority, then older.</text>
+    <text x="488" y="210" class="t-muted" font-size="12">The steal: the old note is simply overwritten;</text>
+    <text x="488" y="226" class="t-muted" font-size="12">the AICA restarts the channel on key-on.</text>
+  </svg>
+  </div>
+  <figcaption><b>Figure 3.</b> The allocation policy, simplified. Priority is the port's priority, carried
+  on every event, so a high-priority sound-effect port can take voices from music but not vice versa.</figcaption>
+</figure>
+<div class="callout warn">
+  <div class="title">A real bug in this build</div>
+  <p>If every one of the 48 voices has a higher priority than the new note, the allocator is supposed to
+  fail. Instead, because of a pointer that is only reset inside the loop, it reads two of its own instruction
+  words as "the chosen voice" and reports success, and note-on then writes to garbage addresses. It only
+  happens when all voices are busy with higher-priority sounds. Details on the
+  <a href="quirks.html">quirks page</a>.</p>
+</div>
+
+<h2 id="note-off">Note off and the sustain pedal</h2>
+<p>Note-off releases <em>every</em> voice playing that port, channel and note (duplicates included) by clearing
+its key-on, so the AICA moves the voice into its release phase. If the sustain pedal (CC 64) was down, the
+voice is only marked as released and keeps sounding; lifting the pedal releases all such voices on the
+channel. The voice's "age" restarts and its level is reset, so the allocator will prefer it once it is
+quiet.</p>
+
+<h2 id="controllers">Controllers</h2>
+<p>Standard MIDI controllers behave as expected, and Sega added a set of controllers that edit the AICA
+parameters of the tone in real time. Controllers that change something audible also update voices already
+sounding on that channel.</p>
+<div class="tablewrap"><table>
+  <tr><th>Group</th><th>Controllers</th><th>Effect</th></tr>
+  <tr><td>Level &amp; pan</td><td>7 volume, 11 expression, 10 pan</td><td>channel level (a curve of volume × expression) and pan; live voices updated</td></tr>
+  <tr><td>Expression</td><td>1 modulation</td><td>scales the tone's vibrato/tremolo depth</td></tr>
+  <tr><td>Pedal</td><td>64 damper</td><td>hold released notes until the pedal is lifted</td></tr>
+  <tr><td>Parameters</td><td>6 data entry, 96/97 increment/decrement, 98-101 NRPN/RPN select</td><td>RPN sets the pitch-bend range</td></tr>
+  <tr><td>Bank</td><td>32 bank select</td><td>which downloaded tone bank the next program change uses (CC 0 is ignored)</td></tr>
+  <tr><td>Filter</td><td>74 cutoff, 75 cutoff range, 110-117 cutoff at fixed ranges, 71/85 resonance, 70 filter on/off</td><td>brighter or darker, more or less resonant</td></tr>
+  <tr><td>Filter levels</td><td>20-24 (coarse) / 52-56 (fine)</td><td>offset each of the five filter-envelope levels</td></tr>
+  <tr><td>Filter envelope</td><td>25-28</td><td>filter attack / decay 1 / decay 2 / release rates</td></tr>
+  <tr><td>Amplitude envelope</td><td>73/87 attack, 88 decay level, 89 decay rate, 72/86 release</td><td>offset the tone's envelope</td></tr>
+  <tr><td>Effects</td><td>91 reverb send, 76 DSP input bus</td><td>how much of the voice goes to the DSP, and on which bus</td></tr>
+  <tr><td>DSP (port 7)</td><td>77 / 78 output pan / level, 79 effect program, 80 positional pan</td><td>control the DSP from MIDI (see <a href="dsp.html">DSP</a>)</td></tr>
+  <tr><td>Misc</td><td>48 timing counter, 121 reset all controllers</td><td>a counter the game can read; reset a whole port's channels</td></tr>
+  <tr><td>Ignored</td><td>0, 120, 123, poly and channel pressure</td><td>no effect in this build</td></tr>
+</table></div>
+
+<h3>Pitch bend and program change</h3>
+<p><strong>Pitch bend</strong> is scaled by the bend range (from the layer, or an RPN override) and applied at
+once to every sounding voice of the channel. <strong>Program change</strong> looks up the current bank (falling
+back to the built-in bank), and switches only if the program exists; notes already playing are unaffected.
+For drums, a host command marks a MIDI channel as a drum channel, whose bank select chooses between two
+drum-kit bank slots.</p>
+
+<h2 id="per-tick">What happens every 4 ms</h2>
+<ul>
+  <li><strong>Delayed key-ons</strong> count down and fire.</li>
+  <li><strong>Port changes</strong> (volume, pan and pitch fades driven by host commands) are applied to every
+  voice of the port, so a fade-out of the music affects notes already sounding.</li>
+  <li><strong>Envelope monitoring</strong> continues in the background every millisecond, keeping each
+  voice's "how loud am I" value fresh for the allocator.</li>
+</ul>

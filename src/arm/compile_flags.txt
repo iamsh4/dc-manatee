@@ -1,0 +1,7 @@
+--target=arm-none-eabi
+-march=armv4
+-marm
+-ffreestanding
+-std=c99
+-I.
+-Wall

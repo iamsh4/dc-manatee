@@ -1,0 +1,17 @@
+{
+ "jumptables": [
+  {"branch": "0x1608", "targets": ["0x1668", "0x1678", "0x16ac"], "note": "midi_in_isr: mov pc,r0 = continuation state (midi_in_state)"},
+  {"branch": "0x2280", "targets": ["0x2284", "0x2288", "0x228c", "0x2290", "0x2294", "0x2298", "0x229c", "0x22a0", "0x22a4"], "note": "cc_cutoff: 9 x b cc_cutoff_kN indexed by cutoff_range"},
+  {"branch": "0x45c8", "table": "0x45cc", "count": 7, "note": "seq_tick: channel-message event parsers"},
+  {"branch": "0x464c", "table": "0x4650", "count": 16, "note": "seq_tick: 0x80-0x8F meta events"},
+  {"branch": "0x8294", "table": "0x8298", "count": 4, "note": "shot_loops_apply: loop mode"}
+ ],
+ "body_add": [
+  {"func": "0x4270", "ranges": [["0x42f0", "0x42fb"], ["0x485c", "0x488b"]]}
+ ],
+ "comments": [
+  {"addr": "0x1608", "kind": "eol", "text": "resume parser at midi_in_state: 0x1668 data1 / 0x1678 data2 / 0x16AC 2-byte data"},
+  {"addr": "0x42f0", "kind": "pre", "text": "Reached only as 'return to lr+4' from seq_evq_push (push succeeded); the instruction at lr (0x42EC) is the ring-full path. Ghidra's decompiler cannot model this; see sequencer.c."},
+  {"addr": "0x485c", "kind": "pre", "text": "Reached only as 'return to lr+4' from seq_evq_push (push succeeded); 0x4858 is the ring-full path."}
+ ]
+}

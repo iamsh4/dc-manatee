@@ -1,0 +1,43 @@
+{
+ "type_files": [
+  "build/ghidra_types.h"
+ ],
+ "labels": [
+  {
+   "addr": "0xc000",
+   "name": "g_port",
+   "type": "PortState[8]",
+   "comment": "MIDI port state"
+  },
+  {
+   "addr": "0xc400",
+   "name": "g_midi_ch",
+   "type": "MidiChannel[128]",
+   "comment": "8 ports x 16 MIDI channels"
+  },
+  {
+   "addr": "0xe800",
+   "name": "g_voice",
+   "type": "Voice[48]",
+   "comment": "voice n drives AICA channel n"
+  },
+  {
+   "addr": "0x13200",
+   "name": "host_cmd_slots",
+   "type": "HostCmd[32]",
+   "comment": "written by the SH-4 (sdSysServer), executed when host_cmd_pending != 0"
+  },
+  {
+   "addr": "0xb000",
+   "name": "evq_ring",
+   "type": "dword[1024]",
+   "comment": "MIDI event ring"
+  },
+  {
+   "addr": "0x800000",
+   "name": "AICA_CH",
+   "type": "AicaChannel[64]",
+   "comment": "64 x AicaChannel"
+  }
+ ]
+}
